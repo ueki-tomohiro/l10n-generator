@@ -10,10 +10,10 @@
     "lint": "eslint . --config eslint.config.js --cache",
     "lint:fix": "eslint . --config eslint.config.js --cache",
     "test": "jest --config jest.config.js",
-    "prepare": "yarn build",
-    "prepublishOnly": "yarn test && yarn lint",
-    "preversion": "yarn lint",
-    "version": "yarn format && git add -A src",
+    "prepare": "pnpm build",
+    "prepublishOnly": "pnpm test && pnpm lint",
+    "preversion": "pnpm lint",
+    "version": "pnpm format && git add -A src",
     "postversion": "git push && git push --tags"
   },
   "repository": {
