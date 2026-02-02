@@ -1,0 +1,18 @@
+# Google Sheets + API Key認証の設定例
+# このファイルをプロジェクトルートにコピーして使用してください
+
+fileType: sheet
+# Google SheetsのIDまたは完全なURLを指定
+path: 1A2B3C4D5E6F7G8H9I0J
+credentialType: apiKey
+# 環境変数からAPIキーを読み込む場合: ${GOOGLE_API_KEY}
+apiKey: YOUR_GOOGLE_API_KEY_HERE
+localizePath: ./src/i18n/
+outputType: typescript
+
+# 使用方法:
+# 1. Google Cloud Consoleでプロジェクトを作成
+# 2. Google Sheets APIを有効化
+# 3. APIキーを作成
+# 4. スプレッドシートを「リンクを知っている全員」に共有設定
+# 5. apiKeyに取得したAPIキーを設定

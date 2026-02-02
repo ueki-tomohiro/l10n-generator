@@ -1,86 +1,300 @@
-<p align="center">
- <img width="100px" src="https://raw.githubusercontent.com/hebertcisco/ts-npm-package-boilerplate/main/.github/images/favicon512x512-npm.png" align="center" alt=":package: ts-npm-package-boilerplate" />
- <h2 align="center">:package: ts-npm-package-boilerplate</h2>
- <p align="center">TypeScript NPM Module Boilerplate</p>
-  <p align="center">
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues">
-      <img alt="Issues" src="https://img.shields.io/github/issues/hebertcisco/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/pulls">
-      <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/hebertcisco/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-     <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub Downloads" src="https://img.shields.io/npm/dw/ts-npm-package-boilerplate?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub Total Downloads" src="https://img.shields.io/npm/dt/ts-npm-package-boilerplate?color=336791&label=Total%20downloads" />
-    </a>
- <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate">
-      <img alt="GitHub release" src="https://img.shields.io/github/release/hebertcisco/ts-npm-package-boilerplate.svg?style=flat&color=336791" />
-    </a>
-    <br />
-    <br />
-  <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues/new/choose">Report Bug</a>
-  <a href="https://github.com/hebertcisco/ts-npm-package-boilerplate/issues/new/choose">Request Feature</a>
-  </p>
- <h3 align="center">Systems on which it has been tested:</h3>
- <p align="center">
-   <a href="https://www.apple.com/br/macos/">
-      <img alt="Macos" src="https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white&style=flat" />
-    </a>
-    <a href="https://ubuntu.com/download">
-      <img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white&style=flat" />
-    </a>
-    <a href="https://www.microsoft.com/pt-br/windows/">
-      <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white&style=flat" />
-    </a>
-  </p>
-<p align="center">Did you like the project? Please, considerate <a href="https://www.buymeacoffee.com/hebertcisco">a donation</a> to help improve!</p>
+# l10n-generator
 
-<p align="center"><strong>TypeScript NPM Module Boilerplate</strong>✨</p>
+> Google SheetsまたはCSVファイルから、Dart ARBファイルとTypeScriptのローカライゼーションファイルを自動生成するCLIツール
 
-[![codecov](https://codecov.io/gh/hebertcisco/ts-npm-package-boilerplate/branch/main/graph/badge.svg?token=Q9fr548J0D)](https://codecov.io/gh/hebertcisco/ts-npm-package-boilerplate)
+[![Issues](https://img.shields.io/github/issues/ueki-tomohiro/l10n-generator?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-generator/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/ueki-tomohiro/l10n-generator?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-generator/pulls)
+[![GitHub release](https://img.shields.io/github/release/ueki-tomohiro/l10n-generator.svg?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-generator)
 
-# Getting started
+## 📚 ドキュメント
 
-## Installation
+詳細なドキュメントは[docsディレクトリ](./docs/)を参照してください:
 
-> Clone this repository: `git clone https://github.com/hebertcisco/ts-npm-package-boilerplate`
+- 🚀 [クイックスタート](./docs/QUICKSTART.md) - 5分で始める
+- 💻 [CLI使用方法](./docs/CLI-USAGE.md) - 完全ガイド
+- 🧪 [テスト環境](./docs/TESTING.md) - 環境構築
+- 🔐 [OAuth2認証](./docs/OAUTH2-QUICKSTART.md) - プライベートシート対応
+- 🔧 [開発者向け](./docs/MIGRATION.md) - TypeScript移行ガイド
 
-### Open the directory and run the script line:
+## ✨ 特徴
+
+- 📝 **複数のデータソース対応**: CSV、Google Sheets（API Key、OAuth2、JWT認証）
+- 🎯 **複数の出力形式**: Dart ARB、TypeScript型定義 + 各言語ファイル
+- 🔧 **YAML設定ファイル**: シンプルで読みやすい設定
+- 🚀 **npxで即実行**: インストール不要で実行可能
+- 🌍 **多言語サポート**: 任意の数の言語に対応
+
+## 📦 インストール
+
+### グローバルインストール
 
 ```bash
-cd ts-npm-package-boilerplate 
+npm install -g l10n-generator
 ```
-```bash
-npm i  # or yarn
-```
-```bash
-rm -rf .git && git init && git add . && git commit -m "Initial commit" #Optional
-```
-Or create use the button "Use this template"
 
-Edit the Icon on Figma:
+### プロジェクトにインストール
 
-<a href="https://www.figma.com/file/vpevGX3j9tmtW8OyLQ9eUm/ts-npm-package-boilerplate-icon?node-id=0%3A1">
-   <img alt="Figma Icon" src="https://raw.githubusercontent.com/hebertcisco/ts-npm-package-boilerplate/main/.github/images/figma-badge.png"/>
-</a>
+```bash
+npm install --save-dev l10n-generator
+# or
+pnpm add -D l10n-generator
+```
+
+### npxで直接実行（インストール不要）
+
+```bash
+npx l10n-generator --config your-config.yaml
+```
+
+## 🚀 クイックスタート
+
+### 1. 設定ファイルを作成
+
+プロジェクトルートに`l10n-generator.config.yaml`を作成します。
+
+```yaml
+fileType: csv
+path: ./localization.csv
+credentialType: none
+localizePath: ./src/i18n/
+outputType: both  # dart | typescript | both
+```
+
+### 2. ローカライゼーションデータを準備
+
+CSVファイルの形式:
+
+```csv
+key,description,ja,en
+hello,Greeting,こんにちは,Hello
+goodbye,Farewell,さようなら,Goodbye
+welcome,Welcome message,ようこそ、{name}さん,"Welcome, {name}"
+```
+
+- 1列目: キー（変数名）
+- 2列目: 説明
+- 3列目以降: 各言語の翻訳テキスト
+
+### 3. 実行
+
+```bash
+# デフォルト設定ファイルを使用
+l10n-generator
+
+# カスタム設定ファイルを指定
+l10n-generator --config custom.config.yaml
+
+# npxで実行
+npx l10n-generator --config your-config.yaml
+```
+
+## 📤 出力形式
+
+### Dart ARB形式 (`outputType: dart`)
+
+```text
+output/
+├── app_ja.arb
+└── app_en.arb
+```
+
+`app_ja.arb`の内容例:
+
+```json
+{
+  "@@locale": "ja",
+  "hello": "こんにちは",
+  "@hello": {
+    "description": "Greeting"
+  },
+  "welcome": "ようこそ、{name}さん",
+  "@welcome": {
+    "description": "Welcome message",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "name"
+      }
+    }
+  }
+}
+```
+
+### TypeScript形式 (`outputType: typescript`)
+
+```text
+output/
+├── translation.ts         # 型定義
+├── translateFunction.ts   # ヘルパー関数
+├── ja.ts                  # 日本語翻訳
+└── en.ts                  # 英語翻訳
+```
+
+`translation.ts`の内容例:
+
+```typescript
+export interface Translation {
+  /**
+   * こんにちは: Greeting
+   */
+  hello: string;
+  /**
+   * ようこそ、{name}さん: Welcome message
+   */
+  welcome: string;
+}
+```
+
+`ja.ts`の内容例:
+
+```typescript
+import { Translation } from "./translation";
+
+export const translation: Translation = {
+  "hello": "こんにちは",
+  "welcome": "ようこそ、{name}さん"
+};
+```
+
+## ⚙️ 設定ファイルの詳細
+
+### 基本設定
+
+| フィールド | 型 | 必須 | 説明 |
+| ----------- | ---- | ---- | ------ |
+| `fileType` | `"csv" \| "sheet"` | ✅ | データソースの種類 |
+| `path` | `string` | ✅ | ファイルパスまたはGoogle Sheet ID/URL |
+| `credentialType` | `"none" \| "apiKey" \| "oauth2" \| "jwt"` | ✅ | 認証方式 |
+| `localizePath` | `string` | ✅ | 出力先ディレクトリ |
+| `outputType` | `"dart" \| "typescript" \| "both"` | - | 出力形式（デフォルト: `dart`） |
+
+### 設定例
+
+詳細な設定例は[examples](./examples)ディレクトリを参照してください。
+
+- [CSV + Dart](./examples/csv-dart.config.yaml)
+- [CSV + TypeScript](./examples/csv-typescript.config.yaml)
+- [Google Sheets + API Key](./examples/sheet-apikey.config.yaml)
+- [Google Sheets + OAuth2](./examples/sheet-oauth2.config.yaml)
+- [Google Sheets + JWT](./examples/sheet-jwt.config.yaml)
+
+## 🔧 Google Sheets の設定
+
+### API Keyを使用する場合
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でプロジェクトを作成
+2. Google Sheets APIを有効化
+3. APIキーを作成
+4. スプレッドシートを「リンクを知っている全員」に共有設定
+
+### OAuth2を使用する場合
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でOAuth 2.0クライアントIDを作成
+2. トークン取得ヘルパーを実行してトークンを取得
+
+   ```bash
+   node lib/helpers/oauth2-helper.js
+   ```
+
+3. 取得したトークンを設定ファイルに追加
+
+詳しくは[OAUTH2-SETUP.md](./docs/OAUTH2-SETUP.md)を参照してください。
+
+### Service Account（JWT）を使用する場合
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でサービスアカウントを作成
+2. JSONキーファイルをダウンロード
+3. スプレッドシートをサービスアカウントのメールアドレスと共有
+4. JSONの内容を設定ファイルの`jwt`フィールドに記載
+
+## 💻 CLIオプション
+
+```bash
+l10n-generator [オプション]
+
+コマンド:
+  l10n-generator diagnose  Google Sheets API接続の診断
+
+オプション:
+  --config     設定ファイルのパス (デフォルト: l10n-generator.config.yaml)
+  --diagnose   接続診断を実行
+  -h, --help   ヘルプを表示
+  --version    バージョンを表示
+
+例:
+  l10n-generator                          デフォルト設定ファイルで生成
+  l10n-generator --config custom.yaml     カスタム設定で生成
+  l10n-generator diagnose                 test.config.yamlで診断実行
+  l10n-generator diagnose --config custom.yaml  カスタム設定で診断
+```
+
+### 診断コマンド
+
+Google Sheets APIの接続に問題がある場合、診断コマンドで原因を特定できます:
+
+```bash
+l10n-generator diagnose --config test.config.yaml
+```
+
+診断コマンドは以下をチェックします:
+
+- 設定ファイルの形式
+- APIキーの有効性
+- Google Sheets APIの有効化状態
+- スプレッドシートの共有設定
+- データ形式の妥当性
+
+## 📝 スクリプトに組み込む
+
+`package.json`にスクリプトを追加:
+
+```json
+{
+  "scripts": {
+    "i18n": "l10n-generator",
+    "i18n:watch": "nodemon --watch localization.csv --exec l10n-generator"
+  }
+}
+```
+
+実行:
+
+```bash
+npm run i18n
+```
+
+## 🐛 トラブルシューティング
+
+### 出力ディレクトリが見つからない
+
+出力先ディレクトリは自動作成されません。事前に作成してください:
+
+```bash
+mkdir -p src/i18n
+```
+
+### Google Sheets APIエラー
+
+- API Keyが正しいか確認
+- Google Sheets APIが有効化されているか確認
+- スプレッドシートの共有設定を確認
+
+詳しいテスト環境のセットアップ手順は[TESTING.md](./docs/TESTING.md)を参照してください。
+
+## 📚 開発者向けドキュメント
+
+- [QUICKSTART.md](./docs/QUICKSTART.md) - 5分でできるクイックスタート
+- [CLI-USAGE.md](./docs/CLI-USAGE.md) - CLI使用方法の詳細
+- [TESTING.md](./docs/TESTING.md) - テスト環境のセットアップ
+- [OAUTH2-SETUP.md](./docs/OAUTH2-SETUP.md) - OAuth2認証のセットアップ
+- [MIGRATION.md](./docs/MIGRATION.md) - TypeScript CLIへの移行ガイド
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](issues).
-
-## Show your support
-
-Give a ⭐️ if this project helped you!
-
-Or buy me a coffee 🙌🏾
-
-<a href="https://www.buymeacoffee.com/hebertcisco">
-    <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=hebertcisco&button_colour=FFDD00&font_colour=000000&font_family=Inter&outline_colour=000000&coffee_colour=ffffff" />
-</a>
+Contributions, issues and feature requests are welcome!
+Feel free to check [issues page](https://github.com/ueki-tomohiro/l10n-generator/issues).
 
 ## 📝 License
 
-Copyright © 2022 [Hebert F Barros](https://github.com/hebertcisco).<br />
+Copyright © 2022-2026 [Tomohiro Ueki](https://github.com/ueki-tomohiro).
 This project is [MIT](LICENSE) licensed.

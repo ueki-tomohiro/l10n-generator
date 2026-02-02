@@ -1,0 +1,37 @@
+name: UnitTesting
+
+on:
+  push:
+    branches: [master, pre-release, release]
+  pull_request:
+
+jobs:
+  unit-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "16.18.0"
+
+      - name: restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: install dependecies
+        run: yarn install --frozen-lockfile
+
+      - name: Unit test
+        run: yarn test
+
+      - name: Upload result
+        uses: actions/upload-artifact@master
+        with:
+          name: coverage
+          path: packages/**/coverage/lcov-report

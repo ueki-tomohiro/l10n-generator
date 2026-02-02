@@ -1,0 +1,6 @@
+key,description,ja,en,es
+hello,Simple greeting,こんにちは,Hello,Hola
+goodbye,Farewell message,さようなら,Goodbye,Adiós
+welcome,Welcome message with parameter,ようこそ、{name}さん,"Welcome, {name}","Bienvenido, {name}"
+error_count,Error count message,{count}件のエラーがあります,"{count} errors found","{count} errores encontrados"
+app_title,Application title,マイアプリ,My App,Mi Aplicación
