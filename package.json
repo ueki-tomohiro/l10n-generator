@@ -1,7 +1,7 @@
 {
-  "name": "l10n-dart",
+  "name": "l10n-generator",
   "version": "0.0.0",
-  "description": "Export l10n.dart",
+  "description": "Generate localization files (Dart ARB, TypeScript) from CSV or Google Sheets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -22,10 +22,16 @@
   },
   "keywords": [
     "l10n",
-    "dart"
+    "i18n",
+    "localization",
+    "internationalization",
+    "dart",
+    "typescript",
+    "arb",
+    "google-sheets"
   ],
   "bin": {
-    "l10n-dart": "./cli.js"
+    "l10n-generator": "./cli.js"
   },
   "author": "Tomohiro Ueki",
   "license": "MIT",
@@ -40,12 +46,14 @@
     "csv-parse": "^5.3.3",
     "google-auth-library": "^8.7.0",
     "googleapis": "^110",
+    "js-yaml": "^4.1.1",
     "lodash": "^4",
     "node-fetch": "^2",
     "yargs": "^17.6.2"
   },
   "devDependencies": {
     "@types/jest": "^29",
+    "@types/js-yaml": "^4.0.9",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "eslint": "^8",

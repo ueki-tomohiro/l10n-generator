@@ -1,0 +1,5 @@
+fileType: csv
+path: ./test.csv
+credentialType: none
+localizePath: ./test-output/
+outputType: both

@@ -6,6 +6,9 @@ export type CredentialType = typeof credentialTypes[number];
 const fileTypes = ["csv", "sheet"] as const;
 export type FileType = typeof fileTypes[number];
 
+const outputTypes = ["dart", "typescript", "both"] as const;
+export type OutputType = typeof outputTypes[number];
+
 export type Config = {
   fileType: FileType;
   path: string;
@@ -14,4 +17,5 @@ export type Config = {
   oauth2?: OAuth2ClientOptions;
   jwt?: JWT;
   localizePath: string;
+  outputType?: OutputType;
 };

@@ -1,67 +1,239 @@
-<p align="center">
- <img width="100px" src="https://raw.githubusercontent.com/ueki-tomohiro/l10n-dart/main/.github/images/favicon512x512-npm.png" align="center" alt=":package: 10n-dart" />
- <h2 align="center">:package: 10n-dart</h2>
- <p align="center">Export l10n.dart</p>
-  <p align="center">
-    <a href="https://github.com/ueki-tomohiro/l10n-dart/issues">
-      <img alt="Issues" src="https://img.shields.io/github/issues/ueki-tomohiro/l10n-dart?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/ueki-tomohiro/l10n-dart/pulls">
-      <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/ueki-tomohiro/l10n-dart?style=flat&color=336791" />
-    </a>
-     <a href="https://github.com/ueki-tomohiro/l10n-dart">
-      <img alt="GitHub Downloads" src="https://img.shields.io/npm/dw/10n-dart?style=flat&color=336791" />
-    </a>
-    <a href="https://github.com/ueki-tomohiro/l10n-dart">
-      <img alt="GitHub Total Downloads" src="https://img.shields.io/npm/dt/10n-dart?color=336791&label=Total%20downloads" />
-    </a>
- <a href="https://github.com/ueki-tomohiro/l10n-dart">
-      <img alt="GitHub release" src="https://img.shields.io/github/release/ueki-tomohiro/l10n-dart.svg?style=flat&color=336791" />
-    </a>
-    <br />
-    <br />
-  <a href="https://github.com/ueki-tomohiro/l10n-dart/issues/new/choose">Report Bug</a>
-  <a href="https://github.com/ueki-tomohiro/l10n-dart/issues/new/choose">Request Feature</a>
-  </p>
- <h3 align="center">Systems on which it has been tested:</h3>
- <p align="center">
-   <a href="https://www.apple.com/br/macos/">
-      <img alt="Macos" src="https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white&style=flat" />
-    </a>
-    <a href="https://ubuntu.com/download">
-      <img alt="Ubuntu" src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white&style=flat" />
-    </a>
-    <a href="https://www.microsoft.com/pt-br/windows/">
-      <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white&style=flat" />
-    </a>
-  </p>
+# l10n-generator
 
-<p align="center"><strong>Export l10n.dart</strong>✨</p>
+> Google SheetsまたはCSVファイルから、Dart ARBファイルとTypeScriptのローカライゼーションファイルを自動生成するCLIツール
 
-[![codecov](https://codecov.io/gh/ueki-tomohiro/l10n-dart/branch/main/graph/badge.svg?token=Q9fr548J0D)](https://codecov.io/gh/ueki-tomohiro/l10n-dart)
+[![Issues](https://img.shields.io/github/issues/ueki-tomohiro/l10n-dart?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-dart/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/ueki-tomohiro/l10n-dart?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-dart/pulls)
+[![GitHub release](https://img.shields.io/github/release/ueki-tomohiro/l10n-dart.svg?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-dart)
 
-# Getting started
+## ✨ 特徴
 
-## Installation
+- 📝 **複数のデータソース対応**: CSV、Google Sheets（API Key、OAuth2、JWT認証）
+- 🎯 **複数の出力形式**: Dart ARB、TypeScript型定義 + 各言語ファイル
+- 🔧 **YAML設定ファイル**: シンプルで読みやすい設定
+- 🚀 **npxで即実行**: インストール不要で実行可能
+- 🌍 **多言語サポート**: 任意の数の言語に対応
 
-> Clone this repository: `git clone https://github.com/ueki-tomohiro/l10n-dart`
+## 📦 インストール
 
-### Open the directory and run the script line:
+### グローバルインストール
 
 ```bash
-cd 10n-dart 
+npm install -g l10n-generator
 ```
+
+### プロジェクトにインストール
+
 ```bash
-npm i  # or yarn
+npm install --save-dev l10n-generator
+# or
+pnpm add -D l10n-generator
 ```
+
+### npxで直接実行（インストール不要）
+
 ```bash
-rm -rf .git && git init && git add . && git commit -m "Initial commit" #Optional
+npx l10n-generator --config your-config.yaml
 ```
+
+## 🚀 クイックスタート
+
+### 1. 設定ファイルを作成
+
+プロジェクトルートに`l10n-generator.config.yaml`を作成します。
+
+```yaml
+fileType: csv
+path: ./localization.csv
+credentialType: none
+localizePath: ./src/i18n/
+outputType: both  # dart | typescript | both
+```
+
+### 2. ローカライゼーションデータを準備
+
+CSVファイルの形式:
+
+```csv
+key,description,ja,en
+hello,Greeting,こんにちは,Hello
+goodbye,Farewell,さようなら,Goodbye
+welcome,Welcome message,ようこそ、{name}さん,"Welcome, {name}"
+```
+
+- 1列目: キー（変数名）
+- 2列目: 説明
+- 3列目以降: 各言語の翻訳テキスト
+
+### 3. 実行
+
+```bash
+# デフォルト設定ファイルを使用
+l10n-generator
+
+# カスタム設定ファイルを指定
+l10n-generator --config custom.config.yaml
+
+# npxで実行
+npx l10n-generator --config your-config.yaml
+```
+
+## 📤 出力形式
+
+### Dart ARB形式 (`outputType: dart`)
+
+```text
+output/
+├── app_ja.arb
+└── app_en.arb
+```
+
+`app_ja.arb`の内容例:
+
+```json
+{
+  "@@locale": "ja",
+  "hello": "こんにちは",
+  "@hello": {
+    "description": "Greeting"
+  },
+  "welcome": "ようこそ、{name}さん",
+  "@welcome": {
+    "description": "Welcome message",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "name"
+      }
+    }
+  }
+}
+```
+
+### TypeScript形式 (`outputType: typescript`)
+
+```text
+output/
+├── translation.ts         # 型定義
+├── translateFunction.ts   # ヘルパー関数
+├── ja.ts                  # 日本語翻訳
+└── en.ts                  # 英語翻訳
+```
+
+`translation.ts`の内容例:
+
+```typescript
+export interface Translation {
+  /**
+   * こんにちは: Greeting
+   */
+  hello: string;
+  /**
+   * ようこそ、{name}さん: Welcome message
+   */
+  welcome: string;
+}
+```
+
+`ja.ts`の内容例:
+
+```typescript
+import { Translation } from "./translation";
+
+export const translation: Translation = {
+  "hello": "こんにちは",
+  "welcome": "ようこそ、{name}さん"
+};
+```
+
+## ⚙️ 設定ファイルの詳細
+
+### 基本設定
+
+| フィールド | 型 | 必須 | 説明 |
+| ----------- | ---- | ---- | ------ |
+| `fileType` | `"csv" \| "sheet"` | ✅ | データソースの種類 |
+| `path` | `string` | ✅ | ファイルパスまたはGoogle Sheet ID/URL |
+| `credentialType` | `"none" \| "apiKey" \| "oauth2" \| "jwt"` | ✅ | 認証方式 |
+| `localizePath` | `string` | ✅ | 出力先ディレクトリ |
+| `outputType` | `"dart" \| "typescript" \| "both"` | - | 出力形式（デフォルト: `dart`） |
+
+### 設定例
+
+詳細な設定例は[examples](./examples)ディレクトリを参照してください。
+
+- [CSV + Dart](./examples/csv-dart.config.yaml)
+- [CSV + TypeScript](./examples/csv-typescript.config.yaml)
+- [Google Sheets + API Key](./examples/sheet-apikey.config.yaml)
+- [Google Sheets + JWT](./examples/sheet-jwt.config.yaml)
+
+## 🔧 Google Sheets の設定
+
+### API Keyを使用する場合
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でプロジェクトを作成
+2. Google Sheets APIを有効化
+3. APIキーを作成
+4. スプレッドシートを「リンクを知っている全員」に共有設定
+
+### Service Account（JWT）を使用する場合
+
+1. [Google Cloud Console](https://console.cloud.google.com/)でサービスアカウントを作成
+2. JSONキーファイルをダウンロード
+3. スプレッドシートをサービスアカウントのメールアドレスと共有
+4. JSONの内容を設定ファイルの`jwt`フィールドに記載
+
+## 💻 CLIオプション
+
+```bash
+l10n-generator [オプション]
+
+オプション:
+  --config   設定ファイルのパス (デフォルト: l10n-generator.config.yaml)
+  -h, --help ヘルプを表示
+```
+
+## 📝 スクリプトに組み込む
+
+`package.json`にスクリプトを追加:
+
+```json
+{
+  "scripts": {
+    "i18n": "l10n-generator",
+    "i18n:watch": "nodemon --watch localization.csv --exec l10n-generator"
+  }
+}
+```
+
+実行:
+
+```bash
+npm run i18n
+```
+
+## 🐛 トラブルシューティング
+
+### 出力ディレクトリが見つからない
+
+出力先ディレクトリは自動作成されません。事前に作成してください:
+
+```bash
+mkdir -p src/i18n
+```
+
+### Google Sheets APIエラー
+
+- API Keyが正しいか確認
+- Google Sheets APIが有効化されているか確認
+- スプレッドシートの共有設定を確認
+
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](issues).
+Contributions, issues and feature requests are welcome!
+Feel free to check [issues page](https://github.com/ueki-tomohiro/l10n-dart/issues).
 
 ## 📝 License
 
-Copyright © 2022 [Tomohiro Ueki](https://github.com/ueki-tomohiro).<br />
+Copyright © 2022-2026 [Tomohiro Ueki](https://github.com/ueki-tomohiro).
 This project is [MIT](LICENSE) licensed.

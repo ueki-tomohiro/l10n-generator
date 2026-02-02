@@ -1,0 +1,8 @@
+# CSV + TypeScript出力の設定例
+# このファイルをプロジェクトルートにコピーして使用してください
+
+fileType: csv
+path: ./localization.csv
+credentialType: none
+localizePath: ./src/i18n/
+outputType: typescript

@@ -1,0 +1,8 @@
+# CSV + Dart & TypeScript両方出力の設定例
+# このファイルをプロジェクトルートにコピーして使用してください
+
+fileType: csv
+path: ./localization.csv
+credentialType: none
+localizePath: ./output/
+outputType: both

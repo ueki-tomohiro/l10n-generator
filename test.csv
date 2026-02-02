@@ -1,0 +1,4 @@
+key,description,ja,en
+hello,Greeting,こんにちは,Hello
+goodbye,Farewell,さようなら,Goodbye
+welcome,Welcome message,ようこそ、{name}さん,"Welcome, {name}"

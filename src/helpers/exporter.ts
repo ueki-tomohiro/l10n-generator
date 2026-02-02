@@ -3,6 +3,7 @@ import camelCase from "lodash/camelCase";
 import { SupportLocale } from "./localization";
 
 const parseInputParameter = (text: string) => {
+  if (!text) return undefined;
   const matches = text.match(/\{\w+\}/g);
   if (!matches || matches.length === 0) return undefined;
   const params = matches.map((t) => t.match(/\w+/)).flatMap((a) => a) as string[];
@@ -21,6 +22,7 @@ const parseInputParameter = (text: string) => {
 };
 
 const createInputParameterFunction = (key: string, text: string) => {
+  if (!text) return undefined;
   const matches = text.match(/\{\w+\}/g);
   if (!matches || matches.length === 0) return undefined;
   const params = matches.map((t) => t.match(/\w+/)).flatMap((a) => a) as string[];
