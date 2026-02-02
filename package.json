@@ -60,7 +60,7 @@
     "@typescript-eslint/parser": "^5",
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
-    "eslint": "^8",
+    "eslint": "^9",
     "eslint-plugin-jsx-a11y": "^6",
     "eslint-plugin-promise": "^6",
     "eslint-plugin-simple-import-sort": "^7",
