@@ -33,7 +33,8 @@ const createInputParameterFunction = (key: string, text: string) => {
 };
 
 export const createL10nFile = async (localizePath: string, values: string[][], locale: SupportLocale) => {
-  const labels = values.pop();
+  // ヘッダー行を取得（配列の最初の要素）
+  const labels = values.shift();
   if (!labels) return;
   const localColumn = labels.findIndex((l) => l == locale) - 2;
 

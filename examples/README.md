@@ -19,6 +19,7 @@
 ## 使用方法
 
 1. 使用したい設定ファイルをプロジェクトルートにコピー:
+
    ```bash
    cp examples/csv-typescript.config.yaml l10n-generator.config.yaml
    ```
@@ -29,6 +30,7 @@
    - `outputType`: 出力形式（dart / typescript / both）
 
 3. l10n-generatorを実行:
+
    ```bash
    l10n-generator
    ```

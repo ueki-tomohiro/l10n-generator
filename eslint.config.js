@@ -6,11 +6,14 @@ module.exports = {
   env: {
     browser: true,
     node: true,
-    jest: true,
     es6: true,
   },
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
-  plugins: ["simple-import-sort", "promise"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:vitest/recommended",
+  ],
+  plugins: ["simple-import-sort", "promise", "vitest"],
   rules: {
     "no-use-before-define": "off",
     "import/no-anonymous-default-export": "error",
