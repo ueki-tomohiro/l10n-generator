@@ -115,7 +115,9 @@ async function getTokens(oauth2Client: OAuth2Client): Promise<void> {
   console.log(`  redirectUri: ${REDIRECT_URI}`);
   console.log(`  refreshToken: ${tokens.refresh_token}`);
   if (tokens.access_token) {
-    console.log(`  accessToken: ${tokens.access_token}  # オプション（有効期限: ${tokens.expiry_date ? new Date(tokens.expiry_date).toLocaleString() : "不明"}）`);
+    console.log(
+      `  accessToken: ${tokens.access_token}  # オプション（有効期限: ${tokens.expiry_date ? new Date(tokens.expiry_date).toLocaleString() : "不明"}）`
+    );
   }
 
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");

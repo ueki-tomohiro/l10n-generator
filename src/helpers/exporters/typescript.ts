@@ -34,10 +34,7 @@ export const createTypeScriptL10nFiles = async (localizePath: string, values: st
   ${key}: string;`;
   });
 
-  fs.writeFileSync(
-    `${localizePath}translation.ts`,
-    `export interface Translation {${types.join("\n")}\n}`
-  );
+  fs.writeFileSync(`${localizePath}translation.ts`, `export interface Translation {${types.join("\n")}\n}`);
 
   // translateFunction.ts のヘルパー関数を生成
   const functions = dataRows

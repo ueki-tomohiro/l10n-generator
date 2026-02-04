@@ -30,9 +30,7 @@ export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = as
 
   if (sheetNameMatch) {
     // gidがある場合は、対応するシート名を取得
-    const sheet = spreadsheet.data.sheets?.find(
-      (s) => s.properties?.sheetId?.toString() === sheetNameMatch[1]
-    );
+    const sheet = spreadsheet.data.sheets?.find((s) => s.properties?.sheetId?.toString() === sheetNameMatch[1]);
     range = sheet?.properties?.title || spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
   } else {
     // gidがない場合は最初のシートを使用

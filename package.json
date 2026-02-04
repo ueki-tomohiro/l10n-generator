@@ -34,9 +34,7 @@
     "arb",
     "google-sheets"
   ],
-  "bin": {
-    "l10n-generator": "./lib/cli.js"
-  },
+  "bin": "./lib/cli.js",
   "author": "Tomohiro Ueki",
   "license": "MIT",
   "bugs": {
