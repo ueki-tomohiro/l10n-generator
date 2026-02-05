@@ -48,10 +48,10 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
       if (config.credentialType === "apiKey") {
         console.log(`  - API Key: ${config.apiKey ? config.apiKey.substring(0, 10) + "..." : "未設定"}\n`);
       } else if (config.credentialType === "oauth2") {
-        console.log(`  - Client ID: ${config.oauth2?.clientId ? config.oauth2.clientId.substring(0, 20) + "..." : "未設定"}`);
-        const hasRefreshToken =
-          config.oauth2?.credentials?.refresh_token ||
-          (config.oauth2 as any)?.refreshToken;
+        console.log(
+          `  - Client ID: ${config.oauth2?.clientId ? config.oauth2.clientId.substring(0, 20) + "..." : "未設定"}`
+        );
+        const hasRefreshToken = config.oauth2?.credentials?.refresh_token || (config.oauth2 as any)?.refreshToken;
         console.log(`  - Refresh Token: ${hasRefreshToken ? "設定済み" : "未設定"}\n`);
       } else if (config.credentialType === "jwt") {
         if (typeof config.jwt === "string") {
@@ -85,12 +85,8 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
       process.exit(1);
     }
     // refreshTokenとaccessTokenは、credentials以下にもトップレベルにも配置される可能性がある
-    const hasRefreshToken =
-      config.oauth2?.credentials?.refresh_token ||
-      (config.oauth2 as any)?.refreshToken;
-    const hasAccessToken =
-      config.oauth2?.credentials?.access_token ||
-      (config.oauth2 as any)?.accessToken;
+    const hasRefreshToken = config.oauth2?.credentials?.refresh_token || (config.oauth2 as any)?.refreshToken;
+    const hasAccessToken = config.oauth2?.credentials?.access_token || (config.oauth2 as any)?.accessToken;
     if (!hasRefreshToken && !hasAccessToken) {
       console.error("❌ OAuth2のトークンが設定されていません");
       console.log("\n📝 トークン取得ヘルパーを実行してください:");

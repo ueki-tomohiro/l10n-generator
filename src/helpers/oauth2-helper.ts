@@ -91,7 +91,7 @@ async function getTokens(oauth2Client: OAuth2Client): Promise<void> {
   // ブラウザで認証URLを開く
   try {
     await open(authorizeUrl);
-  } catch (error) {
+  } catch {
     console.warn("⚠️  ブラウザを自動的に開けませんでした");
   }
 
