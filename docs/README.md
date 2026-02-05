@@ -40,14 +40,6 @@
   - セキュリティのベストプラクティス
   - トラブルシューティング
 
-### 🔧 開発者向け
-
-- **[MIGRATION.md](./MIGRATION.md)** - TypeScript CLI への移行ガイド
-  - cli.js から cli.ts への移行
-  - ビルドプロセスの統合
-  - 型安全性の向上
-  - 開発ワークフロー
-
 ## 📖 認証方式の選択
 
 どの認証方式を使うべきか迷ったら:
@@ -93,12 +85,6 @@
 1. [QUICKSTART.md](./QUICKSTART.md)で API Key 認証を試す
 2. [CLI-USAGE.md](./CLI-USAGE.md)でコマンドを理解する
 3. 必要に応じて[OAUTH2-QUICKSTART.md](./OAUTH2-QUICKSTART.md)で OAuth2 に移行
-
-### 開発者の方
-
-1. [MIGRATION.md](./MIGRATION.md)で TypeScript 実装を理解する
-2. [TESTING.md](./TESTING.md)でテスト環境を構築
-3. [CLI-USAGE.md](./CLI-USAGE.md)で診断コマンドを活用
 
 ### 本番環境の方
 

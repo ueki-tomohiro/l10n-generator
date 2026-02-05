@@ -10,6 +10,15 @@ export const importGoogleSpreadSheetWithOAuth2: ImportGoogleSpreadSheetWithOAuth
 
   const client = new google.auth.OAuth2(option);
 
+  // refreshToken/accessTokenがトップレベルにある場合、credentialsに変換
+  const optionAny = option as any;
+  if (optionAny.refreshToken || optionAny.accessToken) {
+    client.setCredentials({
+      refresh_token: optionAny.refreshToken,
+      access_token: optionAny.accessToken,
+    });
+  }
+
   // OAuth2トークンが設定されているか確認
   const credentials = client.credentials;
   if (!credentials.access_token && !credentials.refresh_token) {
@@ -23,12 +32,18 @@ export const importGoogleSpreadSheetWithOAuth2: ImportGoogleSpreadSheetWithOAuth
 
   const sheets = google.sheets({ version: "v4", auth: client });
 
-  // URLからスプレッドシートIDとシート名を抽出
+  // URLまたはIDからスプレッドシートIDを抽出
+  let spreadsheetId: string;
   const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  if (!match) {
-    throw new Error("Invalid Google Sheets URL");
+  if (match) {
+    // 完全なURLの場合
+    spreadsheetId = match[1];
+  } else if (/^[a-zA-Z0-9-_]+$/.test(url)) {
+    // IDのみの場合
+    spreadsheetId = url;
+  } else {
+    throw new Error("Invalid Google Sheets URL or ID");
   }
-  const spreadsheetId = match[1];
 
   // シート名をURLから取得するか、最初のシートを使用
   const spreadsheet = await sheets.spreadsheets.get({
