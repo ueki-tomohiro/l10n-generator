@@ -14,7 +14,6 @@
 - 💻 [CLI使用方法](./docs/CLI-USAGE.md) - 完全ガイド
 - 🧪 [テスト環境](./docs/TESTING.md) - 環境構築
 - 🔐 [OAuth2認証](./docs/OAUTH2-QUICKSTART.md) - プライベートシート対応
-- 🔧 [開発者向け](./docs/MIGRATION.md) - TypeScript移行ガイド
 
 ## ✨ 特徴
 
@@ -57,7 +56,7 @@ fileType: csv
 path: ./localization.csv
 credentialType: none
 localizePath: ./src/i18n/
-outputType: both  # dart | typescript | both
+outputType: both # dart | typescript | both
 ```
 
 ### 2. ローカライゼーションデータを準備
@@ -151,8 +150,8 @@ export interface Translation {
 import { Translation } from "./translation";
 
 export const translation: Translation = {
-  "hello": "こんにちは",
-  "welcome": "ようこそ、{name}さん"
+  hello: "こんにちは",
+  welcome: "ようこそ、{name}さん",
 };
 ```
 
@@ -160,13 +159,13 @@ export const translation: Translation = {
 
 ### 基本設定
 
-| フィールド | 型 | 必須 | 説明 |
-| ----------- | ---- | ---- | ------ |
-| `fileType` | `"csv" \| "sheet"` | ✅ | データソースの種類 |
-| `path` | `string` | ✅ | ファイルパスまたはGoogle Sheet ID/URL |
-| `credentialType` | `"none" \| "apiKey" \| "oauth2" \| "jwt"` | ✅ | 認証方式 |
-| `localizePath` | `string` | ✅ | 出力先ディレクトリ |
-| `outputType` | `"dart" \| "typescript" \| "both"` | - | 出力形式（デフォルト: `dart`） |
+| フィールド       | 型                                        | 必須 | 説明                                  |
+| ---------------- | ----------------------------------------- | ---- | ------------------------------------- |
+| `fileType`       | `"csv" \| "sheet"`                        | ✅   | データソースの種類                    |
+| `path`           | `string`                                  | ✅   | ファイルパスまたはGoogle Sheet ID/URL |
+| `credentialType` | `"none" \| "apiKey" \| "oauth2" \| "jwt"` | ✅   | 認証方式                              |
+| `localizePath`   | `string`                                  | ✅   | 出力先ディレクトリ                    |
+| `outputType`     | `"dart" \| "typescript" \| "both"`        | -    | 出力形式（デフォルト: `dart`）        |
 
 ### 設定例
 
@@ -280,14 +279,6 @@ mkdir -p src/i18n
 - スプレッドシートの共有設定を確認
 
 詳しいテスト環境のセットアップ手順は[TESTING.md](./docs/TESTING.md)を参照してください。
-
-## 📚 開発者向けドキュメント
-
-- [QUICKSTART.md](./docs/QUICKSTART.md) - 5分でできるクイックスタート
-- [CLI-USAGE.md](./docs/CLI-USAGE.md) - CLI使用方法の詳細
-- [TESTING.md](./docs/TESTING.md) - テスト環境のセットアップ
-- [OAUTH2-SETUP.md](./docs/OAUTH2-SETUP.md) - OAuth2認証のセットアップ
-- [MIGRATION.md](./docs/MIGRATION.md) - TypeScript CLIへの移行ガイド
 
 ## 🤝 Contributing
 

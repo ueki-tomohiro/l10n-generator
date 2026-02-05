@@ -37,3 +37,4 @@ test.config.yaml
 test-oauth2.config.yaml
 *-oauth2.config.yaml
 coverage/
+*.test.json

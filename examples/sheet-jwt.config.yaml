@@ -1,31 +1,45 @@
-# Google Sheets + JWT (Service Account)認証の設定例
+# Google Sheets + JWT認証の設定例
 # このファイルをプロジェクトルートにコピーして使用してください
 
 fileType: sheet
 # Google SheetsのIDまたは完全なURLを指定
-path: https://docs.google.com/spreadsheets/d/1A2B3C4D5E6F7G8H9I0J/edit
+path: YOUR_SPREADSHEET_ID_HERE
 credentialType: jwt
-jwt:
-  type: service_account
-  project_id: your-project-id
-  private_key_id: your-private-key-id
-  # 改行は\nで表現
-  private_key: "-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
-  client_email: your-service-account@your-project.iam.gserviceaccount.com
-  client_id: "123456789012345678901"
-  auth_uri: https://accounts.google.com/o/oauth2/auth
-  token_uri: https://oauth2.googleapis.com/token
-  auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
-  client_x509_cert_url: https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40your-project.iam.gserviceaccount.com
-localizePath: ./localization/
-outputType: both
+
+# 方法1: JSONファイルのパスを指定（推奨）
+jwt: ./path/to/service-account-key.json
+
+# 方法2: JSONの内容を直接記載（代替）
+# jwt:
+#   type: service_account
+#   project_id: your-project-id
+#   private_key_id: abc123...
+#   private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBA...\n-----END PRIVATE KEY-----\n"
+#   client_email: your-service-account@your-project-id.iam.gserviceaccount.com
+#   client_id: "123456789"
+#   auth_uri: https://accounts.google.com/o/oauth2/auth
+#   token_uri: https://oauth2.googleapis.com/token
+#   auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+#   client_x509_cert_url: https://www.googleapis.com/robot/v1/metadata/x509/...
+
+localizePath: ./src/i18n/
+outputType: dart
 
 # 使用方法:
-# 1. Google Cloud Consoleでサービスアカウントを作成
-# 2. JSONキーファイルをダウンロード
-# 3. スプレッドシートをサービスアカウントのメールアドレスと共有
-# 4. ダウンロードしたJSONの内容をjwtフィールドに記載
+# 1. Google Cloud ConsoleでService Accountを作成
+#    https://console.cloud.google.com/iam-admin/serviceaccounts
 #
-# セキュリティのため、実際のプロジェクトでは:
-# - 環境変数を使用: jwt.private_key: ${GOOGLE_SERVICE_ACCOUNT_KEY}
-# - または、JSONファイルを.gitignoreに追加してローカルのみで使用
+# 2. JSONキーをダウンロード
+#
+# 3. スプレッドシートをService Accountのメールアドレスと共有
+#    - スプレッドシートを開く
+#    - 右上の「共有」ボタンをクリック
+#    - Service Accountのメールアドレス（client_email）を追加
+#    - 権限を「閲覧者」に設定
+#
+# 4. jwt フィールドにJSONファイルのパスを指定
+#
+# 5. 実行:
+#    l10n-generator --config sheet-jwt.config.yaml
+#
+# 詳しくは ../docs/TESTING.md を参照してください
