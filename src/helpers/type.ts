@@ -15,7 +15,7 @@ export type Config = {
   credentialType: CredentialType;
   apiKey?: string;
   oauth2?: OAuth2ClientOptions;
-  jwt?: JWTOptions;
+  jwt?: JWTOptions | string; // JWTOptionsオブジェクトまたはJSONファイルパス
   localizePath: string;
   outputType?: OutputType;
 };

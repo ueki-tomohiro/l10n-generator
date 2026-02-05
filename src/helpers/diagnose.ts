@@ -54,7 +54,11 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
           (config.oauth2 as any)?.refreshToken;
         console.log(`  - Refresh Token: ${hasRefreshToken ? "設定済み" : "未設定"}\n`);
       } else if (config.credentialType === "jwt") {
-        console.log(`  - Service Account Email: ${config.jwt?.email || "未設定"}\n`);
+        if (typeof config.jwt === "string") {
+          console.log(`  - JWT File: ${config.jwt}\n`);
+        } else {
+          console.log(`  - Service Account Email: ${config.jwt?.email || "未設定"}\n`);
+        }
       } else {
         console.log("\n⚠️  認証方式が指定されていません");
         process.exit(0);
@@ -94,7 +98,14 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
       process.exit(1);
     }
   } else if (config.credentialType === "jwt") {
-    if (!config.jwt?.email || !config.jwt?.key) {
+    if (typeof config.jwt === "string") {
+      // ファイルパスの場合、ファイルの存在を確認
+      if (!fs.existsSync(config.jwt)) {
+        console.error(`❌ JWTファイルが見つかりません: ${config.jwt}`);
+        console.log("\n📝 正しいJSONファイルのパスを指定してください");
+        process.exit(1);
+      }
+    } else if (!config.jwt?.email || !config.jwt?.key) {
       console.error("❌ Service Accountの情報が設定されていません");
       console.log("\n📝 Google Cloud ConsoleでService Accountを作成し、JSONキーをダウンロードしてください:");
       console.log("   https://console.cloud.google.com/iam-admin/serviceaccounts");
@@ -218,7 +229,16 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
       rows = (valuesResponse.data.values as string[][]) || [];
     } else if (config.credentialType === "jwt") {
       // JWT認証
-      const auth = new google.auth.JWT(config.jwt);
+      // config.jwtが文字列の場合、JSONファイルから読み込む
+      let jwtOptions;
+      if (typeof config.jwt === "string") {
+        const fileContent = fs.readFileSync(config.jwt, "utf8");
+        jwtOptions = JSON.parse(fileContent);
+      } else {
+        jwtOptions = config.jwt;
+      }
+
+      const auth = new google.auth.JWT(jwtOptions);
       const sheets = google.sheets({ version: "v4", auth });
 
       const spreadsheet = await sheets.spreadsheets.get({
@@ -317,7 +337,22 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
         console.log("   スプレッドシートをService Accountと共有してください:");
         console.log(`   1. スプレッドシートを開く: https://docs.google.com/spreadsheets/d/${config.path}/edit`);
         console.log("   2. 右上の「共有」ボタンをクリック");
-        console.log(`   3. Service Accountのメールアドレスを追加: ${config.jwt?.email}`);
+
+        // config.jwtが文字列の場合は、ファイルから読み込んでemailを取得
+        let email = "SERVICE_ACCOUNT_EMAIL";
+        if (typeof config.jwt === "string") {
+          try {
+            const fileContent = fs.readFileSync(config.jwt, "utf8");
+            const jwtData = JSON.parse(fileContent);
+            email = jwtData.client_email || email;
+          } catch {
+            // ファイル読み込みエラーは無視
+          }
+        } else if (config.jwt?.email) {
+          email = config.jwt.email;
+        }
+
+        console.log(`   3. Service Accountのメールアドレスを追加: ${email}`);
         console.log("   4. 権限を「閲覧者」に設定");
       }
     }

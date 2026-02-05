@@ -86,9 +86,30 @@ JSONファイル内の`client_email`の値をコピーして、スプレッド�
 
 ##### ステップ5: 設定ファイルの作成
 
-ダウンロードしたJSONファイルの内容を、設定ファイルの`jwt`フィールドに記載します。
+ダウンロードしたJSONファイルを、設定ファイルの`jwt`フィールドに**ファイルパス**として指定します（推奨）。
 
-**test-jwt.config.yaml**:
+**test-jwt.config.yaml** (推奨):
+
+```yaml
+fileType: sheet
+path: YOUR_SPREADSHEET_ID_HERE
+credentialType: jwt
+jwt: ./path/to/service-account-key.json  # JSONファイルのパス
+localizePath: ./test-output/
+outputType: both
+```
+
+**重要な注意事項**:
+
+- JSONファイルには機密情報が含まれているため、**.gitignore**に追加して公開しないようにしてください
+- ファイルパスは、設定ファイルからの相対パスまたは絶対パスで指定できます
+- JSONファイルを直接編集する必要はありません
+
+##### 代替方法: JSONの内容を直接記載
+
+JSONファイルの内容を、設定ファイルに直接記載することもできます。
+
+**test-jwt.config.yaml** (代替):
 
 ```yaml
 fileType: sheet
@@ -109,11 +130,7 @@ localizePath: ./test-output/
 outputType: both
 ```
 
-**重要な注意事項**:
-
-- `private_key`は改行を含む文字列なので、YAMLでは引用符で囲む必要があります
-- JSONファイル全体をそのまま`jwt`フィールドにコピー&ペーストできます
-- JSONファイルには機密情報が含まれているため、**.gitignore**に追加して公開しないようにしてください
+**注意**: `private_key`は改行を含む文字列なので、YAMLでは引用符で囲む必要があります
 
 ##### ステップ6: 接続テスト
 

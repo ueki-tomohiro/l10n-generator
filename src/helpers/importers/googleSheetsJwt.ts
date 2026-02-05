@@ -1,14 +1,28 @@
 import { google } from "googleapis";
 import { JWTOptions } from "google-auth-library";
+import fs from "fs";
 
-type ImportGoogleSpreadSheetWithJWT = (url: string, option?: JWTOptions) => Promise<string[][]>;
+type ImportGoogleSpreadSheetWithJWT = (url: string, option?: JWTOptions | string) => Promise<string[][]>;
 
 export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = async (url, option) => {
   if (!option) {
     throw new Error("JWT credentials are required");
   }
 
-  const auth = new google.auth.JWT(option);
+  // optionが文字列の場合、JSONファイルパスとして読み込む
+  let jwtOptions: JWTOptions;
+  if (typeof option === "string") {
+    try {
+      const fileContent = fs.readFileSync(option, "utf8");
+      jwtOptions = JSON.parse(fileContent) as JWTOptions;
+    } catch (error) {
+      throw new Error(`Failed to read JWT credentials from file: ${option}. ${(error as Error).message}`);
+    }
+  } else {
+    jwtOptions = option;
+  }
+
+  const auth = new google.auth.JWT(jwtOptions);
   await auth.authorize();
 
   const sheets = google.sheets({ version: "v4", auth });
