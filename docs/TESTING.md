@@ -33,11 +33,138 @@
 
 #### 方法 B: Service Account (JWT)認証
 
+**概要**: Service Account認証は、サーバー間通信や本番環境に最適です。ユーザーの操作なしで自動的に認証できます。
+
+##### ステップ1: Service Accountの作成
+
 1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
-2. **IAM と管理** → **サービスアカウント** → **サービスアカウントを作成**
-3. サービスアカウントを作成後、**キーを作成** → **JSON**を選択
-4. ダウンロードした JSON ファイルを保存
-5. スプレッドシートをサービスアカウントのメールアドレス(JSON 内の`client_email`)と共有
+2. プロジェクトを選択（または新規作成）
+3. **IAM と管理** → **サービスアカウント**を開く
+4. **サービスアカウントを作成**をクリック
+
+##### ステップ2: サービスアカウントの設定
+
+1. **サービスアカウント名**を入力（例: `l10n-generator`）
+2. **説明**を入力（例: `Localization file generator`）
+3. **作成して続行**をクリック
+4. 役割は設定不要（スキップして**完了**をクリック）
+
+##### ステップ3: JSONキーの作成とダウンロード
+
+1. 作成したサービスアカウントをクリック
+2. **キー**タブを開く
+3. **鍵を追加** → **新しい鍵を作成**
+4. **JSON**を選択して**作成**をクリック
+5. JSONファイルが自動的にダウンロードされます
+
+**ダウンロードされたJSONファイルの例**:
+
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "abc123...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBA...\n-----END PRIVATE KEY-----\n",
+  "client_email": "l10n-generator@your-project-id.iam.gserviceaccount.com",
+  "client_id": "123456789",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/..."
+}
+```
+
+##### ステップ4: スプレッドシートの共有
+
+JSONファイル内の`client_email`の値をコピーして、スプレッドシートと共有します。
+
+1. Google Sheetsでスプレッドシートを開く
+2. 右上の**共有**ボタンをクリック
+3. `client_email`のアドレス（例: `l10n-generator@your-project-id.iam.gserviceaccount.com`）を入力
+4. 権限を**閲覧者**に設定
+5. **送信**をクリック
+
+##### ステップ5: 設定ファイルの作成
+
+ダウンロードしたJSONファイルの内容を、設定ファイルの`jwt`フィールドに記載します。
+
+**test-jwt.config.yaml**:
+
+```yaml
+fileType: sheet
+path: YOUR_SPREADSHEET_ID_HERE
+credentialType: jwt
+jwt:
+  type: service_account
+  project_id: your-project-id
+  private_key_id: abc123...
+  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBA...\n-----END PRIVATE KEY-----\n"
+  client_email: l10n-generator@your-project-id.iam.gserviceaccount.com
+  client_id: "123456789"
+  auth_uri: https://accounts.google.com/o/oauth2/auth
+  token_uri: https://oauth2.googleapis.com/token
+  auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+  client_x509_cert_url: https://www.googleapis.com/robot/v1/metadata/x509/...
+localizePath: ./test-output/
+outputType: both
+```
+
+**重要な注意事項**:
+
+- `private_key`は改行を含む文字列なので、YAMLでは引用符で囲む必要があります
+- JSONファイル全体をそのまま`jwt`フィールドにコピー&ペーストできます
+- JSONファイルには機密情報が含まれているため、**.gitignore**に追加して公開しないようにしてください
+
+##### ステップ6: 接続テスト
+
+診断コマンドで接続をテストします:
+
+```bash
+pnpm build
+node lib/cli.js diagnose --config test-jwt.config.yaml
+```
+
+成功すると以下のように表示されます:
+
+```text
+🔍 Google Sheets API 接続診断ツール
+
+📋 ステップ1: 設定ファイルの確認
+✓ test-jwt.config.yaml を検出しました
+
+📖 ステップ2: 設定の読み込み
+✓ 設定を読み込みました
+  - ファイルタイプ: sheet
+  - 認証方式: jwt
+  - Sheet ID: YOUR_SPREADSHEET_ID_HERE
+  - Service Account Email: l10n-generator@your-project-id.iam.gserviceaccount.com
+
+🌐 ステップ3: Google Sheets APIへの接続テスト
+  接続中...
+
+✅ 接続成功!
+```
+
+##### トラブルシューティング
+
+###### エラー: Permission denied
+
+```text
+❌ 予期しないエラー: permission denied
+
+💡 解決方法:
+   スプレッドシートをService Accountと共有してください:
+   1. スプレッドシートを開く: https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit
+   2. 右上の「共有」ボタンをクリック
+   3. Service Accountのメールアドレスを追加: l10n-generator@your-project-id.iam.gserviceaccount.com
+   4. 権限を「閲覧者」に設定
+```
+
+→ スプレッドシートがService Accountと共有されていません。ステップ4を確認してください。
+
+###### エラー: JWT credentials are required
+
+→ 設定ファイルの`jwt`フィールドが正しく設定されていません。JSONファイルの内容を確認してください。
 
 ## 🔧 環境設定
 
