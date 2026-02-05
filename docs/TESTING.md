@@ -94,7 +94,7 @@ JSONファイル内の`client_email`の値をコピーして、スプレッド�
 fileType: sheet
 path: YOUR_SPREADSHEET_ID_HERE
 credentialType: jwt
-jwt: ./path/to/service-account-key.json  # JSONファイルのパス
+jwt: ./path/to/service-account-key.json # JSONファイルのパス
 localizePath: ./test-output/
 outputType: both
 ```

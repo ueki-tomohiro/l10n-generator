@@ -230,12 +230,26 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
     } else if (config.credentialType === "jwt") {
       // JWT認証
       // config.jwtが文字列の場合、JSONファイルから読み込む
-      let jwtOptions;
+      let jwtOptions: any;
       if (typeof config.jwt === "string") {
         const fileContent = fs.readFileSync(config.jwt, "utf8");
-        jwtOptions = JSON.parse(fileContent);
+        const jsonData = JSON.parse(fileContent);
+
+        // Service Account JSONファイルのフィールド名をJWTOptionsに変換
+        jwtOptions = {
+          email: jsonData.client_email,
+          key: jsonData.private_key,
+          keyId: jsonData.private_key_id,
+          subject: jsonData.subject,
+          additionalClaims: jsonData.additionalClaims,
+          scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+        };
       } else {
-        jwtOptions = config.jwt;
+        jwtOptions = { ...config.jwt };
+        // スコープが設定されていない場合は追加
+        if (!jwtOptions.scopes) {
+          jwtOptions.scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
+        }
       }
 
       const auth = new google.auth.JWT(jwtOptions);

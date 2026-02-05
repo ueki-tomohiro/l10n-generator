@@ -14,12 +14,26 @@ export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = as
   if (typeof option === "string") {
     try {
       const fileContent = fs.readFileSync(option, "utf8");
-      jwtOptions = JSON.parse(fileContent) as JWTOptions;
+      const jsonData = JSON.parse(fileContent) as any;
+
+      // Service Account JSONファイルのフィールド名をJWTOptionsに変換
+      jwtOptions = {
+        email: jsonData.client_email,
+        key: jsonData.private_key,
+        keyId: jsonData.private_key_id,
+        subject: jsonData.subject,
+        additionalClaims: jsonData.additionalClaims,
+      };
     } catch (error) {
       throw new Error(`Failed to read JWT credentials from file: ${option}. ${(error as Error).message}`);
     }
   } else {
     jwtOptions = option;
+  }
+
+  // スコープが設定されていない場合は追加
+  if (!jwtOptions.scopes) {
+    jwtOptions.scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
   }
 
   const auth = new google.auth.JWT(jwtOptions);
