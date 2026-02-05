@@ -1,12 +1,13 @@
 {
   "name": "l10n-generator",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Generate localization files (Dart ARB, TypeScript) from CSV or Google Sheets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "format": "prettier --write \"src/**/*.(js|ts)\"",
+    "formatcheck": "prettier --check \"src/**/*.(js|ts)\"",
     "lint": "eslint . --config eslint.config.js --cache",
     "lint:fix": "eslint . --config eslint.config.js --cache",
     "test": "vitest run",
@@ -41,10 +42,10 @@
     "url": "https://github.com/ueki-tomohiro/l10n-generator/issues"
   },
   "homepage": "https://github.com/ueki-tomohiro/l10n-generator#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "@types/lodash": "^4.17.23",
-    "@types/node-fetch": "^2.6.13",
-    "@types/yargs": "^17.0.35",
     "csv-parse": "^6.1.0",
     "google-auth-library": "^10.5.0",
     "googleapis": "^171.0.0",
@@ -56,6 +57,9 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.23",
+    "@types/node-fetch": "^2.6.13",
+    "@types/yargs": "^17.0.35",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vitest/coverage-v8": "^4.0.18",
