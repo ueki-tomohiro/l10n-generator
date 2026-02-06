@@ -1,10 +1,10 @@
-const tsParser = require("@typescript-eslint/parser");
-const tsPlugin = require("@typescript-eslint/eslint-plugin");
-const simpleImportSort = require("eslint-plugin-simple-import-sort");
-const promisePlugin = require("eslint-plugin-promise");
-const vitestPlugin = require("eslint-plugin-vitest");
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import promisePlugin from "eslint-plugin-promise";
+import vitestPlugin from "eslint-plugin-vitest";
 
-module.exports = [
+export default [
   {
     ignores: ["./*.config.js", "lib/**/*", "node_modules/**/*", "coverage/**/*"],
   },

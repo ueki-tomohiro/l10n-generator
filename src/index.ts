@@ -1,7 +1,7 @@
-import { importValues } from "./helpers/importer";
-import { createL10nFile, createTypeScriptL10nFiles } from "./helpers/exporter";
-import { loadConfig } from "./helpers/config-loader";
-import { SupportLocale } from "./helpers/localization";
+import { importValues } from "./helpers/importer.js";
+import { createL10nFile, createTypeScriptL10nFiles } from "./helpers/exporter.js";
+import { loadConfig } from "./helpers/config-loader.js";
+import { SupportLocale } from "./helpers/localization.js";
 
 /**
  * ヘッダー行からロケールリストを抽出

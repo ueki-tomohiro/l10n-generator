@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { importValues } from "./importer";
+import { importValues } from "./importer.js";
 import path from "path";
-import { createTempDir, cleanupTempDir, createTestCSV, basicTestData, paramTestData } from "../test-helpers/test-utils";
+import {
+  createTempDir,
+  cleanupTempDir,
+  createTestCSV,
+  basicTestData,
+  paramTestData,
+} from "../test-helpers/test-utils.js";
 
 describe("importValues - CSV", () => {
   it("既存のsample-data.csvファイルを読み込む", async () => {

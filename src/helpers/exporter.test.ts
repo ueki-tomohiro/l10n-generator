@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createL10nFile, createTypeScriptL10nFiles } from "./exporter";
+import { createL10nFile, createTypeScriptL10nFiles } from "./exporter.js";
 import fs from "fs";
 import path from "path";
 import {
@@ -8,7 +8,7 @@ import {
   basicTestData,
   paramTestData,
   multiLocaleTestData,
-} from "../test-helpers/test-utils";
+} from "../test-helpers/test-utils.js";
 
 describe("createL10nFile", () => {
   let tempDir: string;

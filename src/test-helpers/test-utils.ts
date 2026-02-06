@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import yaml from "js-yaml";
-import { Config } from "../helpers/type";
+import { Config } from "../helpers/type.js";
 
 /**
  * 一時ディレクトリを作成

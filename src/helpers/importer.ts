@@ -1,9 +1,9 @@
-import { importCSV } from "./importers/csv";
-import { importGoogleSpreadSheetWithAPIKey } from "./importers/googleSheetsApiKey";
-import { importGoogleSpreadSheetWithJWT } from "./importers/googleSheetsJwt";
-import { importGoogleSpreadSheetWithOAuth2 } from "./importers/googleSheetsOAuth2";
-import { importGoogleSpreadSheet } from "./importers/googleSheetsPublic";
-import { Config } from "./type";
+import { importCSV } from "./importers/csv.js";
+import { importGoogleSpreadSheetWithAPIKey } from "./importers/googleSheetsApiKey.js";
+import { importGoogleSpreadSheetWithJWT } from "./importers/googleSheetsJwt.js";
+import { importGoogleSpreadSheetWithOAuth2 } from "./importers/googleSheetsOAuth2.js";
+import { importGoogleSpreadSheet } from "./importers/googleSheetsPublic.js";
+import { Config } from "./type.js";
 
 type ImportValues = (config: Config) => Promise<string[][]>;
 

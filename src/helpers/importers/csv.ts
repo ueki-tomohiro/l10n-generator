@@ -1,6 +1,8 @@
 import fs from "fs";
 import { parse } from "csv-parse";
-import isArray from "lodash/isArray";
+import lodash from "lodash";
+
+const { isArray } = lodash;
 
 type ImportCSV = (filePath: string) => Promise<string[][]>;
 

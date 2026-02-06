@@ -1,5 +1,5 @@
 import fs from "fs";
-import { SupportLocale } from "../localization";
+import { SupportLocale } from "../localization.js";
 
 const parseInputParameter = (text: string) => {
   if (!text) return undefined;

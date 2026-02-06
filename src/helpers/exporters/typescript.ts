@@ -1,5 +1,7 @@
 import fs from "fs";
-import camelCase from "lodash/camelCase";
+import lodash from "lodash";
+
+const { camelCase } = lodash;
 
 const createInputParameterFunction = (key: string, text: string) => {
   if (!text) return undefined;
