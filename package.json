@@ -1,7 +1,8 @@
 {
   "name": "l10n-generator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Generate localization files (Dart ARB, TypeScript) from CSV or Google Sheets",
+  "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {

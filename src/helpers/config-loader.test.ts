@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { loadConfig } from "./config-loader";
-import { createTempDir, cleanupTempDir, createTestConfig } from "../test-helpers/test-utils";
+import { loadConfig } from "./config-loader.js";
+import { createTempDir, cleanupTempDir, createTestConfig } from "../test-helpers/test-utils.js";
 import fs from "fs";
 import path from "path";
 

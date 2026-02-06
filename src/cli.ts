@@ -2,8 +2,8 @@
 
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
-import { cli } from "./index";
-import { diagnose } from "./helpers/diagnose";
+import { cli } from "./index.js";
+import { diagnose } from "./helpers/diagnose.js";
 
 /**
  * 診断コマンドのハンドラ

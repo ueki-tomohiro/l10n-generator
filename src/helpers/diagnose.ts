@@ -2,7 +2,7 @@ import fs from "fs";
 import yaml from "js-yaml";
 import fetch from "node-fetch";
 import { google } from "googleapis";
-import { Config } from "./type";
+import { Config } from "./type.js";
 
 interface DiagnoseOptions {
   configFile: string;

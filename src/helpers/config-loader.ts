@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { Config } from "./type";
+import { Config } from "./type.js";
 
 export const loadConfig = (configPath: string): Config => {
   // 1. 絶対パス解決

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { cli } from "./index";
+import { cli } from "./index.js";
 import fs from "fs";
 import path from "path";
 import {
@@ -10,7 +10,7 @@ import {
   basicTestData,
   paramTestData,
   multiLocaleTestData,
-} from "./test-helpers/test-utils";
+} from "./test-helpers/test-utils.js";
 
 describe("cli - End-to-End", () => {
   let tempDir: string;
