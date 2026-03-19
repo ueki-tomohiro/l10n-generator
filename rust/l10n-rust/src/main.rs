@@ -4,12 +4,12 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, anyhow, bail};
 use clap::Parser;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::{Map, Value, json};
 
 #[derive(Debug, Parser)]
 #[command(name = "l10n-rust")]
-#[command(about = "Rust localization generator (CSV path for migration phase 1)")]
+#[command(about = "Rust localization generator")]
 struct Cli {
     #[arg(long, default_value = "l10n-generator.config.yaml")]
     config: String,
@@ -54,9 +54,40 @@ struct Config {
     file_type: FileType,
     path: String,
     credential_type: CredentialType,
+    api_key: Option<String>,
     localize_path: String,
     #[serde(default = "default_output_type")]
     output_type: OutputType,
+}
+
+#[derive(Debug, Deserialize)]
+struct SpreadsheetMetadata {
+    sheets: Option<Vec<Sheet>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Sheet {
+    properties: Option<SheetProperties>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SheetProperties {
+    title: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SpreadsheetValues {
+    values: Option<Vec<Vec<String>>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoogleApiErrorWrapper {
+    error: Option<GoogleApiError>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoogleApiError {
+    message: Option<String>,
 }
 
 fn main() {
@@ -85,15 +116,8 @@ fn run() -> Result<()> {
     println!("  - 出力形式: {}", display_output_type(&config.output_type));
     println!("  - 出力先: {}\n", config.localize_path);
 
-    if config.file_type != FileType::Csv {
-        bail!(
-            "Rust移行フェーズ1では fileType: csv のみ対応しています（現在: {}）",
-            display_file_type(&config.file_type)
-        );
-    }
-
     println!("データをインポート中...");
-    let rows = import_csv(&config.path)?;
+    let rows = import_values(&config)?;
     println!("  - {}行のデータを読み込みました\n", rows.len());
 
     if rows.len() < 2 {
@@ -167,6 +191,122 @@ fn import_csv(path: &str) -> Result<Vec<Vec<String>>> {
     }
 
     Ok(rows)
+}
+
+fn import_values(config: &Config) -> Result<Vec<Vec<String>>> {
+    match config.file_type {
+        FileType::Csv => import_csv(&config.path),
+        FileType::Sheet => import_sheet(
+            &config.path,
+            &config.credential_type,
+            config.api_key.as_deref(),
+        ),
+    }
+}
+
+fn import_sheet(
+    path_or_id: &str,
+    credential_type: &CredentialType,
+    api_key: Option<&str>,
+) -> Result<Vec<Vec<String>>> {
+    match credential_type {
+        CredentialType::None => fetch_sheet_values(path_or_id, None),
+        CredentialType::ApiKey => {
+            let key = api_key.ok_or_else(|| anyhow!("API key is required"))?;
+            fetch_sheet_values(path_or_id, Some(key))
+        }
+        CredentialType::Oauth2 => {
+            bail!("Rust移行フェーズ2では credentialType: oauth2 は未対応です")
+        }
+        CredentialType::Jwt => {
+            bail!("Rust移行フェーズ2では credentialType: jwt は未対応です")
+        }
+    }
+}
+
+fn fetch_sheet_values(spreadsheet_input: &str, api_key: Option<&str>) -> Result<Vec<Vec<String>>> {
+    let spreadsheet_id = extract_spreadsheet_id(spreadsheet_input)
+        .ok_or_else(|| anyhow!("Invalid Google Sheets URL or ID"))?;
+
+    let metadata_url = build_sheet_api_url(
+        &format!("https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}"),
+        api_key,
+    );
+    let metadata: SpreadsheetMetadata = fetch_google_json(&metadata_url)
+        .with_context(|| format!("Failed to fetch spreadsheet metadata: {spreadsheet_id}"))?;
+
+    let sheet_name = metadata
+        .sheets
+        .as_ref()
+        .and_then(|sheets| sheets.first())
+        .and_then(|sheet| sheet.properties.as_ref())
+        .and_then(|props| props.title.clone())
+        .unwrap_or_else(|| "Sheet1".to_string());
+
+    let values_url = build_sheet_api_url(
+        &format!(
+            "https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{}",
+            urlencoding::encode(&sheet_name)
+        ),
+        api_key,
+    );
+
+    let values: SpreadsheetValues = fetch_google_json(&values_url)
+        .with_context(|| format!("Failed to fetch spreadsheet values: {spreadsheet_id}"))?;
+
+    Ok(values.values.unwrap_or_default())
+}
+
+fn build_sheet_api_url(base: &str, api_key: Option<&str>) -> String {
+    match api_key {
+        Some(key) => format!("{base}?key={key}"),
+        None => base.to_string(),
+    }
+}
+
+fn fetch_google_json<T: DeserializeOwned>(url: &str) -> Result<T> {
+    let response =
+        reqwest::blocking::get(url).with_context(|| format!("HTTP request failed: {url}"))?;
+
+    if !response.status().is_success() {
+        let status_text = response.status().to_string();
+        let body = response.text().unwrap_or_default();
+        let message = extract_google_error_message(&body).unwrap_or(status_text);
+        bail!("{message}");
+    }
+
+    response
+        .json::<T>()
+        .with_context(|| format!("Failed to parse response JSON: {url}"))
+}
+
+fn extract_google_error_message(body: &str) -> Option<String> {
+    serde_json::from_str::<GoogleApiErrorWrapper>(body)
+        .ok()
+        .and_then(|wrapper| wrapper.error)
+        .and_then(|error| error.message)
+}
+
+fn extract_spreadsheet_id(input: &str) -> Option<String> {
+    if let Some(prefix_idx) = input.find("/spreadsheets/d/") {
+        let suffix = &input[prefix_idx + "/spreadsheets/d/".len()..];
+        let id: String = suffix
+            .chars()
+            .take_while(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+            .collect();
+        if !id.is_empty() {
+            return Some(id);
+        }
+    }
+
+    if input
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Some(input.to_string());
+    }
+
+    None
 }
 
 fn extract_locales(rows: &[Vec<String>]) -> Result<Vec<String>> {
@@ -507,5 +647,25 @@ mod tests {
         let ja_content =
             fs::read_to_string(temp_dir.path().join("ja.ts")).expect("ja.ts should be generated");
         assert!(ja_content.contains("\"welcome\": \"ようこそ{name}さん\""));
+    }
+
+    #[test]
+    fn extract_spreadsheet_id_from_full_url() {
+        let id = extract_spreadsheet_id(
+            "https://docs.google.com/spreadsheets/d/1A2B3C4D5E6F7G8H9I0J/edit#gid=12345",
+        );
+        assert_eq!(id, Some("1A2B3C4D5E6F7G8H9I0J".to_string()));
+    }
+
+    #[test]
+    fn extract_spreadsheet_id_from_plain_id() {
+        let id = extract_spreadsheet_id("1A2B3C4D5E6F7G8H9I0J");
+        assert_eq!(id, Some("1A2B3C4D5E6F7G8H9I0J".to_string()));
+    }
+
+    #[test]
+    fn extract_spreadsheet_id_rejects_invalid_input() {
+        let id = extract_spreadsheet_id("https://example.com/not-a-sheet");
+        assert_eq!(id, None);
     }
 }
