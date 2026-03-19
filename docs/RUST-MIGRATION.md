@@ -2,7 +2,7 @@
 
 このドキュメントは、`l10n-generator` を TypeScript から Rust へ段階移行するための実装方針と、現在の進捗をまとめたものです。
 
-## 現在の進捗（フェーズ2b）
+## 現在の進捗（フェーズ3）
 
 `rust/l10n-rust` に Rust CLI を追加済みです。
 
@@ -10,7 +10,7 @@
 
 - YAML 設定ファイル読み込み
 - CSV 読み込み
-- Google Sheets 読み込み（`credentialType: none | apiKey | jwt`）
+- Google Sheets 読み込み（`credentialType: none | apiKey | jwt | oauth2`）
 - Dart ARB 生成
 - TypeScript 出力（`translation.ts` / `translateFunction.ts` / `*.ts`）
 - `outputType: dart | typescript | both`
@@ -18,7 +18,6 @@
 ### 未対応
 
 - `diagnose` 相当の診断コマンド
-- Google Sheets の `credentialType: oauth2`
 - OAuth2 トークン取得ヘルパー
 
 ## 実行方法
@@ -38,15 +37,14 @@ pnpm run rust:run -- --config l10n-generator.config.yaml
 現時点の Rust 実装でサポートする入力:
 
 - `fileType: csv`
-- `fileType: sheet` + `credentialType: none | apiKey | jwt`
+- `fileType: sheet` + `credentialType: none | apiKey | jwt | oauth2`
 
 ## 推奨移行ステップ
 
 1. CSV経路を Rust に切り替え、生成差分を比較する
 2. TypeScript実装を残したまま CI で並行検証する
-3. Google Sheets API の `oauth2` を Rust 側へ移植する
-4. `diagnose` と OAuth2 helper を Rust 側へ集約する
-5. TS実装を段階的に縮退・最終削除する
+3. `diagnose` と OAuth2 helper を Rust 側へ集約する
+4. TS実装を段階的に縮退・最終削除する
 
 ## 検証ポイント
 

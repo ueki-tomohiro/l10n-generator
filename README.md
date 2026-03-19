@@ -91,8 +91,7 @@ npx l10n-generator --config your-config.yaml
 ## 🦀 Rust移行フェーズ2a（CSV + Google Sheets API Key/Public対応）
 
 Rust版CLIは `rust/l10n-rust` に追加されています。  
-現時点では `fileType: csv` と `fileType: sheet` のうち `credentialType: none | apiKey | jwt` に対応し、`dart/typescript/both` の生成を実行できます。  
-`credentialType: oauth2` は次フェーズで対応予定です。
+現時点では `fileType: csv` と `fileType: sheet` の全認証方式（`credentialType: none | apiKey | jwt | oauth2`）に対応し、`dart/typescript/both` の生成を実行できます。
 
 ```bash
 # ビルド

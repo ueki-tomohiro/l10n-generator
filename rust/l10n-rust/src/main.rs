@@ -57,6 +57,7 @@ struct Config {
     path: String,
     credential_type: CredentialType,
     api_key: Option<String>,
+    oauth2: Option<serde_yaml::Value>,
     jwt: Option<serde_yaml::Value>,
     localize_path: String,
     #[serde(default = "default_output_type")]
@@ -114,6 +115,22 @@ struct OAuthTokenResponse {
 struct OAuthErrorResponse {
     error: Option<String>,
     error_description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Oauth2Config {
+    client_id: Option<String>,
+    client_secret: Option<String>,
+    access_token: Option<String>,
+    refresh_token: Option<String>,
+    credentials: Option<Oauth2Credentials>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Oauth2Credentials {
+    access_token: Option<String>,
+    refresh_token: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -239,6 +256,7 @@ fn import_values(config: &Config) -> Result<Vec<Vec<String>>> {
             &config.path,
             &config.credential_type,
             config.api_key.as_deref(),
+            config.oauth2.as_ref(),
             config.jwt.as_ref(),
         ),
     }
@@ -248,6 +266,7 @@ fn import_sheet(
     path_or_id: &str,
     credential_type: &CredentialType,
     api_key: Option<&str>,
+    oauth2: Option<&serde_yaml::Value>,
     jwt: Option<&serde_yaml::Value>,
 ) -> Result<Vec<Vec<String>>> {
     match credential_type {
@@ -256,13 +275,15 @@ fn import_sheet(
             let key = api_key.ok_or_else(|| anyhow!("API key is required"))?;
             fetch_sheet_values(path_or_id, Some(key))
         }
+        CredentialType::Oauth2 => {
+            let oauth2_config = load_oauth2_config(oauth2)?;
+            let access_token = fetch_access_token_with_oauth2(&oauth2_config)?;
+            fetch_sheet_values_with_bearer(path_or_id, &access_token)
+        }
         CredentialType::Jwt => {
             let service_account_key = load_service_account_key(jwt)?;
             let access_token = fetch_access_token_with_service_account(&service_account_key)?;
             fetch_sheet_values_with_bearer(path_or_id, &access_token)
-        }
-        CredentialType::Oauth2 => {
-            bail!("Rust移行フェーズ2では credentialType: oauth2 は未対応です")
         }
     }
 }
@@ -362,6 +383,12 @@ fn load_service_account_key(jwt_field: Option<&serde_yaml::Value>) -> Result<Ser
     }
 }
 
+fn load_oauth2_config(oauth2_field: Option<&serde_yaml::Value>) -> Result<Oauth2Config> {
+    let raw_value = oauth2_field.ok_or_else(|| anyhow!("OAuth2 credentials are required"))?;
+    serde_yaml::from_value::<Oauth2Config>(raw_value.clone())
+        .with_context(|| "Failed to parse OAuth2 credentials")
+}
+
 fn fetch_access_token_with_service_account(service_account: &ServiceAccountKey) -> Result<String> {
     let issued_at = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -405,6 +432,60 @@ fn fetch_access_token_with_service_account(service_account: &ServiceAccountKey) 
         .json::<OAuthTokenResponse>()
         .with_context(|| "Failed to parse OAuth token response")?;
 
+    Ok(token.access_token)
+}
+
+fn fetch_access_token_with_oauth2(oauth2: &Oauth2Config) -> Result<String> {
+    let access_token = oauth2.access_token.clone().or_else(|| {
+        oauth2
+            .credentials
+            .as_ref()
+            .and_then(|credentials| credentials.access_token.clone())
+    });
+    if let Some(access_token) = access_token {
+        return Ok(access_token);
+    }
+
+    let refresh_token = oauth2.refresh_token.clone().or_else(|| {
+        oauth2
+            .credentials
+            .as_ref()
+            .and_then(|credentials| credentials.refresh_token.clone())
+    });
+    let refresh_token =
+        refresh_token.ok_or_else(|| anyhow!("OAuth2 refresh token or access token is required"))?;
+
+    let client_id = oauth2
+        .client_id
+        .as_ref()
+        .ok_or_else(|| anyhow!("OAuth2 clientId is required for refresh token flow"))?;
+    let client_secret = oauth2
+        .client_secret
+        .as_ref()
+        .ok_or_else(|| anyhow!("OAuth2 clientSecret is required for refresh token flow"))?;
+
+    let token_endpoint = "https://oauth2.googleapis.com/token";
+    let response = reqwest::blocking::Client::new()
+        .post(token_endpoint)
+        .form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token.as_str()),
+            ("client_id", client_id.as_str()),
+            ("client_secret", client_secret.as_str()),
+        ])
+        .send()
+        .with_context(|| "Failed to request OAuth2 access token")?;
+
+    if !response.status().is_success() {
+        let status_text = response.status().to_string();
+        let body = response.text().unwrap_or_default();
+        let message = extract_oauth_error_message(&body).unwrap_or(status_text);
+        bail!("{message}");
+    }
+
+    let token = response
+        .json::<OAuthTokenResponse>()
+        .with_context(|| "Failed to parse OAuth2 token response")?;
     Ok(token.access_token)
 }
 
@@ -805,5 +886,18 @@ mod tests {
     fn extract_spreadsheet_id_rejects_invalid_input() {
         let id = extract_spreadsheet_id("https://example.com/not-a-sheet");
         assert_eq!(id, None);
+    }
+
+    #[test]
+    fn oauth2_direct_access_token_is_used_without_refresh() {
+        let config = Oauth2Config {
+            client_id: None,
+            client_secret: None,
+            access_token: Some("test-access-token".to_string()),
+            refresh_token: None,
+            credentials: None,
+        };
+        let token = fetch_access_token_with_oauth2(&config).expect("token should be resolved");
+        assert_eq!(token, "test-access-token");
     }
 }
