@@ -1,10 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, anyhow, bail};
 use clap::Parser;
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use regex::Regex;
-use serde::{Deserialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value, json};
 
 #[derive(Debug, Parser)]
@@ -55,6 +57,7 @@ struct Config {
     path: String,
     credential_type: CredentialType,
     api_key: Option<String>,
+    jwt: Option<serde_yaml::Value>,
     localize_path: String,
     #[serde(default = "default_output_type")]
     output_type: OutputType,
@@ -88,6 +91,42 @@ struct GoogleApiErrorWrapper {
 #[derive(Debug, Deserialize)]
 struct GoogleApiError {
     message: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ServiceAccountKey {
+    #[serde(alias = "client_email", alias = "email")]
+    client_email: String,
+    #[serde(alias = "private_key", alias = "key")]
+    private_key: String,
+    #[serde(alias = "token_uri", alias = "tokenUri", default = "default_token_uri")]
+    token_uri: String,
+    #[serde(alias = "private_key_id", alias = "keyId", default)]
+    private_key_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct OAuthTokenResponse {
+    access_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct OAuthErrorResponse {
+    error: Option<String>,
+    error_description: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct ServiceAccountClaims {
+    iss: String,
+    scope: String,
+    aud: String,
+    exp: usize,
+    iat: usize,
+}
+
+fn default_token_uri() -> String {
+    "https://oauth2.googleapis.com/token".to_string()
 }
 
 fn main() {
@@ -200,6 +239,7 @@ fn import_values(config: &Config) -> Result<Vec<Vec<String>>> {
             &config.path,
             &config.credential_type,
             config.api_key.as_deref(),
+            config.jwt.as_ref(),
         ),
     }
 }
@@ -208,6 +248,7 @@ fn import_sheet(
     path_or_id: &str,
     credential_type: &CredentialType,
     api_key: Option<&str>,
+    jwt: Option<&serde_yaml::Value>,
 ) -> Result<Vec<Vec<String>>> {
     match credential_type {
         CredentialType::None => fetch_sheet_values(path_or_id, None),
@@ -215,16 +256,33 @@ fn import_sheet(
             let key = api_key.ok_or_else(|| anyhow!("API key is required"))?;
             fetch_sheet_values(path_or_id, Some(key))
         }
+        CredentialType::Jwt => {
+            let service_account_key = load_service_account_key(jwt)?;
+            let access_token = fetch_access_token_with_service_account(&service_account_key)?;
+            fetch_sheet_values_with_bearer(path_or_id, &access_token)
+        }
         CredentialType::Oauth2 => {
             bail!("Rust移行フェーズ2では credentialType: oauth2 は未対応です")
-        }
-        CredentialType::Jwt => {
-            bail!("Rust移行フェーズ2では credentialType: jwt は未対応です")
         }
     }
 }
 
 fn fetch_sheet_values(spreadsheet_input: &str, api_key: Option<&str>) -> Result<Vec<Vec<String>>> {
+    fetch_sheet_values_inner(spreadsheet_input, api_key, None)
+}
+
+fn fetch_sheet_values_with_bearer(
+    spreadsheet_input: &str,
+    bearer_token: &str,
+) -> Result<Vec<Vec<String>>> {
+    fetch_sheet_values_inner(spreadsheet_input, None, Some(bearer_token))
+}
+
+fn fetch_sheet_values_inner(
+    spreadsheet_input: &str,
+    api_key: Option<&str>,
+    bearer_token: Option<&str>,
+) -> Result<Vec<Vec<String>>> {
     let spreadsheet_id = extract_spreadsheet_id(spreadsheet_input)
         .ok_or_else(|| anyhow!("Invalid Google Sheets URL or ID"))?;
 
@@ -232,7 +290,7 @@ fn fetch_sheet_values(spreadsheet_input: &str, api_key: Option<&str>) -> Result<
         &format!("https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}"),
         api_key,
     );
-    let metadata: SpreadsheetMetadata = fetch_google_json(&metadata_url)
+    let metadata: SpreadsheetMetadata = fetch_google_json(&metadata_url, bearer_token)
         .with_context(|| format!("Failed to fetch spreadsheet metadata: {spreadsheet_id}"))?;
 
     let sheet_name = metadata
@@ -251,7 +309,7 @@ fn fetch_sheet_values(spreadsheet_input: &str, api_key: Option<&str>) -> Result<
         api_key,
     );
 
-    let values: SpreadsheetValues = fetch_google_json(&values_url)
+    let values: SpreadsheetValues = fetch_google_json(&values_url, bearer_token)
         .with_context(|| format!("Failed to fetch spreadsheet values: {spreadsheet_id}"))?;
 
     Ok(values.values.unwrap_or_default())
@@ -264,9 +322,15 @@ fn build_sheet_api_url(base: &str, api_key: Option<&str>) -> String {
     }
 }
 
-fn fetch_google_json<T: DeserializeOwned>(url: &str) -> Result<T> {
-    let response =
-        reqwest::blocking::get(url).with_context(|| format!("HTTP request failed: {url}"))?;
+fn fetch_google_json<T: DeserializeOwned>(url: &str, bearer_token: Option<&str>) -> Result<T> {
+    let client = reqwest::blocking::Client::new();
+    let mut request = client.get(url);
+    if let Some(token) = bearer_token {
+        request = request.bearer_auth(token);
+    }
+    let response = request
+        .send()
+        .with_context(|| format!("HTTP request failed: {url}"))?;
 
     if !response.status().is_success() {
         let status_text = response.status().to_string();
@@ -278,6 +342,80 @@ fn fetch_google_json<T: DeserializeOwned>(url: &str) -> Result<T> {
     response
         .json::<T>()
         .with_context(|| format!("Failed to parse response JSON: {url}"))
+}
+
+fn load_service_account_key(jwt_field: Option<&serde_yaml::Value>) -> Result<ServiceAccountKey> {
+    let raw_value = jwt_field.ok_or_else(|| anyhow!("JWT credentials are required"))?;
+
+    match raw_value {
+        serde_yaml::Value::String(path) => {
+            let file_content = fs::read_to_string(path)
+                .with_context(|| format!("Failed to read JWT credentials from file: {path}"))?;
+            serde_json::from_str::<ServiceAccountKey>(&file_content)
+                .with_context(|| format!("Failed to parse JWT credentials file as JSON: {path}"))
+        }
+        serde_yaml::Value::Mapping(_) => {
+            serde_yaml::from_value::<ServiceAccountKey>(raw_value.clone())
+                .with_context(|| "Failed to parse inline JWT credentials")
+        }
+        _ => bail!("JWT credentials format is invalid. Use file path or mapping object"),
+    }
+}
+
+fn fetch_access_token_with_service_account(service_account: &ServiceAccountKey) -> Result<String> {
+    let issued_at = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .context("System clock appears to be before UNIX_EPOCH")?
+        .as_secs() as usize;
+
+    let claims = ServiceAccountClaims {
+        iss: service_account.client_email.clone(),
+        scope: "https://www.googleapis.com/auth/spreadsheets.readonly".to_string(),
+        aud: service_account.token_uri.clone(),
+        iat: issued_at,
+        exp: issued_at + 3600,
+    };
+
+    let mut header = Header::new(Algorithm::RS256);
+    header.kid = service_account.private_key_id.clone();
+
+    let encoding_key = EncodingKey::from_rsa_pem(service_account.private_key.as_bytes())
+        .with_context(|| "Failed to parse service account private key")?;
+    let assertion = encode(&header, &claims, &encoding_key)
+        .with_context(|| "Failed to generate service account JWT assertion")?;
+
+    let token_endpoint = &service_account.token_uri;
+    let response = reqwest::blocking::Client::new()
+        .post(token_endpoint)
+        .form(&[
+            ("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+            ("assertion", assertion.as_str()),
+        ])
+        .send()
+        .with_context(|| format!("Failed to request OAuth token: {token_endpoint}"))?;
+
+    if !response.status().is_success() {
+        let status_text = response.status().to_string();
+        let body = response.text().unwrap_or_default();
+        let message = extract_oauth_error_message(&body).unwrap_or(status_text);
+        bail!("{message}");
+    }
+
+    let token = response
+        .json::<OAuthTokenResponse>()
+        .with_context(|| "Failed to parse OAuth token response")?;
+
+    Ok(token.access_token)
+}
+
+fn extract_oauth_error_message(body: &str) -> Option<String> {
+    let parsed = serde_json::from_str::<OAuthErrorResponse>(body).ok()?;
+    match (parsed.error, parsed.error_description) {
+        (Some(error), Some(description)) => Some(format!("{error}: {description}")),
+        (Some(error), None) => Some(error),
+        (None, Some(description)) => Some(description),
+        (None, None) => None,
+    }
 }
 
 fn extract_google_error_message(body: &str) -> Option<String> {
