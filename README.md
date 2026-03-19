@@ -14,6 +14,7 @@
 - 💻 [CLI使用方法](./docs/CLI-USAGE.md) - 完全ガイド
 - 🧪 [テスト環境](./docs/TESTING.md) - 環境構築
 - 🔐 [OAuth2認証](./docs/OAUTH2-QUICKSTART.md) - プライベートシート対応
+- 🦀 [Rust移行ガイド](./docs/RUST-MIGRATION.md) - Rust版への段階移行
 
 ## ✨ 特徴
 
@@ -85,6 +86,22 @@ l10n-generator --config custom.config.yaml
 
 # npxで実行
 npx l10n-generator --config your-config.yaml
+```
+
+## 🦀 Rust移行フェーズ1（CSV対応）
+
+Rust版CLIは `rust/l10n-rust` に追加されています。  
+現時点では `fileType: csv` のみ対応し、`dart/typescript/both` の生成を実行できます。
+
+```bash
+# ビルド
+pnpm run rust:build
+
+# テスト
+pnpm run rust:test
+
+# 実行（--config をそのまま渡せます）
+pnpm run rust:run -- --config l10n-generator.config.yaml
 ```
 
 ## 📤 出力形式

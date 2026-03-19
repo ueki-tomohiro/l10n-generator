@@ -7,6 +7,9 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "rust:build": "cargo build --manifest-path rust/l10n-rust/Cargo.toml",
+    "rust:test": "cargo test --manifest-path rust/l10n-rust/Cargo.toml",
+    "rust:run": "cargo run --manifest-path rust/l10n-rust/Cargo.toml --",
     "format": "prettier --write \"src/**/*.(js|ts)\"",
     "formatcheck": "prettier --check \"src/**/*.(js|ts)\"",
     "lint": "eslint . --config eslint.config.js --cache",

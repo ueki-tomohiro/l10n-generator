@@ -18,6 +18,11 @@
   - トラブルシューティング
   - 実行例
 
+- **[RUST-MIGRATION.md](./RUST-MIGRATION.md)** - Rust への段階移行ガイド
+  - フェーズ1で実装済みの範囲
+  - TypeScript と Rust の並行運用
+  - 次フェーズの実装計画
+
 ### 🧪 テスト環境
 
 - **[TESTING.md](./TESTING.md)** - テスト環境のセットアップ

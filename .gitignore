@@ -39,3 +39,6 @@ test-oauth2.config.yaml
 *-oauth2.config.yaml
 coverage/
 *.test.json
+
+# Rust build artifacts
+rust/**/target/
