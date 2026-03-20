@@ -225,6 +225,14 @@ pnpm build
 node lib/cli.js --config test.config.yaml
 ```
 
+Rust版の検証:
+
+```bash
+pnpm run rust:test
+pnpm run rust:diagnose -- --config test.config.yaml
+pnpm run rust:parity
+```
+
 ### 3. 出力の確認
 
 成功すると `test-output/` ディレクトリに以下のファイルが生成されます:

@@ -1,0 +1,44 @@
+name: Rust Validation
+
+on:
+  push:
+    branches: [main, master, pre-release, release, update-rust]
+  pull_request:
+
+jobs:
+  rust-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: restore cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust/l10n-rust
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: rust unit test
+        run: pnpm rust:test
+
+      - name: parity test (TypeScript vs Rust)
+        run: pnpm rust:parity

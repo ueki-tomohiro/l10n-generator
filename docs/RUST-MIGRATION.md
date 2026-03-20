@@ -16,6 +16,8 @@
 - `outputType: dart | typescript | both`
 - `diagnose` サブコマンド
 - `oauth2-helper` サブコマンド
+- TS/Rust 生成結果の一致検証コマンド（`pnpm run rust:parity`）
+- Rust 検証用 GitHub Actions（`.github/workflows/rust-validation.yaml`）
 
 ### 未対応
 
@@ -38,6 +40,9 @@ pnpm run rust:diagnose -- --config test.config.yaml
 
 # OAuth2ヘルパー
 pnpm run rust:oauth2-helper
+
+# TS版とRust版の生成結果比較
+pnpm run rust:parity
 ```
 
 `--config` には既存YAMLを利用できます。  
