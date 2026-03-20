@@ -2,7 +2,7 @@
 
 このドキュメントは、`l10n-generator` を TypeScript から Rust へ段階移行するための実装方針と、現在の進捗をまとめたものです。
 
-## 現在の進捗（フェーズ3）
+## 現在の進捗（フェーズ4）
 
 `rust/l10n-rust` に Rust CLI を追加済みです。
 
@@ -14,11 +14,12 @@
 - Dart ARB 生成
 - TypeScript 出力（`translation.ts` / `translateFunction.ts` / `*.ts`）
 - `outputType: dart | typescript | both`
+- `diagnose` サブコマンド
+- `oauth2-helper` サブコマンド
 
 ### 未対応
 
-- `diagnose` 相当の診断コマンド
-- OAuth2 トークン取得ヘルパー
+- TypeScript実装の縮退・削除（切り替え作業）
 
 ## 実行方法
 
@@ -31,6 +32,12 @@ pnpm run rust:test
 
 # 実行
 pnpm run rust:run -- --config l10n-generator.config.yaml
+
+# 診断
+pnpm run rust:diagnose -- --config test.config.yaml
+
+# OAuth2ヘルパー
+pnpm run rust:oauth2-helper
 ```
 
 `--config` には既存YAMLを利用できます。  
@@ -43,8 +50,7 @@ pnpm run rust:run -- --config l10n-generator.config.yaml
 
 1. CSV経路を Rust に切り替え、生成差分を比較する
 2. TypeScript実装を残したまま CI で並行検証する
-3. `diagnose` と OAuth2 helper を Rust 側へ集約する
-4. TS実装を段階的に縮退・最終削除する
+3. TS実装を段階的に縮退・最終削除する
 
 ## 検証ポイント
 

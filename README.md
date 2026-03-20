@@ -102,6 +102,12 @@ pnpm run rust:test
 
 # 実行（--config をそのまま渡せます）
 pnpm run rust:run -- --config l10n-generator.config.yaml
+
+# 接続診断
+pnpm run rust:diagnose -- --config test.config.yaml
+
+# OAuth2トークン取得ヘルパー
+pnpm run rust:oauth2-helper
 ```
 
 ## 📤 出力形式

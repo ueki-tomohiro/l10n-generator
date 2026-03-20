@@ -1,19 +1,36 @@
 use std::fs;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result, anyhow, bail};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use regex::Regex;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value, json};
+use tiny_http::{Response, Server, StatusCode};
+use url::Url;
 
 #[derive(Debug, Parser)]
 #[command(name = "l10n-rust")]
 #[command(about = "Rust localization generator")]
 struct Cli {
     #[arg(long, default_value = "l10n-generator.config.yaml")]
+    config: String,
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    Diagnose(DiagnoseArgs),
+    Oauth2Helper,
+}
+
+#[derive(Debug, Parser)]
+struct DiagnoseArgs {
+    #[arg(long, default_value = "test.config.yaml")]
     config: String,
 }
 
@@ -65,7 +82,19 @@ struct Config {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DiagnoseConfig {
+    file_type: FileType,
+    path: String,
+    credential_type: CredentialType,
+    api_key: Option<String>,
+    oauth2: Option<serde_yaml::Value>,
+    jwt: Option<serde_yaml::Value>,
+}
+
+#[derive(Debug, Deserialize)]
 struct SpreadsheetMetadata {
+    properties: Option<SpreadsheetProperties>,
     sheets: Option<Vec<Sheet>>,
 }
 
@@ -77,6 +106,20 @@ struct Sheet {
 #[derive(Debug, Deserialize)]
 struct SheetProperties {
     title: Option<String>,
+    grid_properties: Option<GridProperties>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SpreadsheetProperties {
+    title: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GridProperties {
+    row_count: Option<u32>,
+    column_count: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -109,6 +152,8 @@ struct ServiceAccountKey {
 #[derive(Debug, Deserialize)]
 struct OAuthTokenResponse {
     access_token: String,
+    refresh_token: Option<String>,
+    expires_in: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -156,10 +201,17 @@ fn main() {
 
 fn run() -> Result<()> {
     let cli = Cli::parse();
+    match cli.command {
+        Some(Command::Diagnose(args)) => run_diagnose(&args.config),
+        Some(Command::Oauth2Helper) => run_oauth2_helper(),
+        None => run_generate(&cli.config),
+    }
+}
 
+fn run_generate(config_path: &str) -> Result<()> {
     println!("=== l10n-rust ローカライゼーションファイル生成 ===\n");
-    println!("設定ファイルを読み込み中: {}", cli.config);
-    let config = load_config(&cli.config)?;
+    println!("設定ファイルを読み込み中: {config_path}");
+    let config = load_config(config_path)?;
 
     println!(
         "  - ファイルタイプ: {}",
@@ -216,6 +268,236 @@ fn load_config(config_path: &str) -> Result<Config> {
     }
 
     Ok(config)
+}
+
+fn load_diagnose_config(config_path: &str) -> Result<DiagnoseConfig> {
+    let absolute_path = resolve_absolute_path(config_path)?;
+
+    let content = fs::read_to_string(&absolute_path)
+        .with_context(|| format!("設定ファイルが見つかりません: {}", absolute_path.display()))?;
+
+    serde_yaml::from_str(&content).with_context(|| "設定ファイルの読み込みに失敗しました")
+}
+
+fn run_diagnose(config_path: &str) -> Result<()> {
+    println!("🔍 Google Sheets API 接続診断ツール\n");
+
+    println!("📋 ステップ1: 設定ファイルの確認");
+    let absolute_path = resolve_absolute_path(config_path)?;
+    if !absolute_path.exists() {
+        bail!("{} が見つかりません", absolute_path.display());
+    }
+    println!("✓ {} を検出しました\n", absolute_path.display());
+
+    println!("📖 ステップ2: 設定の読み込み");
+    let config = load_diagnose_config(config_path)?;
+    println!("✓ 設定を読み込みました");
+    println!(
+        "  - ファイルタイプ: {}",
+        display_file_type(&config.file_type)
+    );
+    println!(
+        "  - 認証方式: {}",
+        display_credential_type(&config.credential_type)
+    );
+
+    if config.file_type == FileType::Csv {
+        println!("  - CSV Path: {}\n", config.path);
+        println!("✓ CSV形式の設定です。診断はGoogle Sheets専用です。");
+        println!("\n次のステップ:");
+        println!("  cargo run --manifest-path rust/l10n-rust/Cargo.toml -- --config {config_path}");
+        return Ok(());
+    }
+
+    if config.path.trim().is_empty() {
+        bail!("Sheet IDが設定されていません");
+    }
+    println!("  - Sheet ID: {}", config.path);
+
+    let (api_key, oauth2, jwt) = match config.credential_type {
+        CredentialType::None => (None, None, None),
+        CredentialType::ApiKey => {
+            let key = config
+                .api_key
+                .as_deref()
+                .ok_or_else(|| anyhow!("API key is required"))?;
+            println!(
+                "  - API Key: {}...\n",
+                &key.chars().take(10).collect::<String>()
+            );
+            (Some(key.to_string()), None, None)
+        }
+        CredentialType::Oauth2 => {
+            let oauth2 = load_oauth2_config(config.oauth2.as_ref())?;
+            println!(
+                "  - Client ID: {}",
+                oauth2.client_id.as_deref().unwrap_or("未設定")
+            );
+            let has_refresh = oauth2.refresh_token.is_some()
+                || oauth2
+                    .credentials
+                    .as_ref()
+                    .and_then(|c| c.refresh_token.as_ref())
+                    .is_some();
+            println!(
+                "  - Refresh Token: {}\n",
+                if has_refresh {
+                    "設定済み"
+                } else {
+                    "未設定"
+                }
+            );
+            (None, Some(oauth2), None)
+        }
+        CredentialType::Jwt => {
+            let jwt = load_service_account_key(config.jwt.as_ref())?;
+            println!("  - Service Account Email: {}\n", jwt.client_email);
+            (None, None, Some(jwt))
+        }
+    };
+
+    println!("🌐 ステップ3: Google Sheets APIへの接続テスト");
+    println!("  接続中...");
+
+    let bearer_token = if let Some(oauth2) = oauth2.as_ref() {
+        Some(fetch_access_token_with_oauth2(oauth2)?)
+    } else if let Some(jwt) = jwt.as_ref() {
+        Some(fetch_access_token_with_service_account(jwt)?)
+    } else {
+        None
+    };
+
+    let (spreadsheet_id, metadata) =
+        fetch_sheet_metadata(&config.path, api_key.as_deref(), bearer_token.as_deref())?;
+
+    let rows = if let Some(sheet) = metadata.sheets.as_ref().and_then(|sheets| sheets.first()) {
+        let sheet_name = sheet
+            .properties
+            .as_ref()
+            .and_then(|props| props.title.clone())
+            .unwrap_or_else(|| "Sheet1".to_string());
+        fetch_sheet_values_by_id(
+            &spreadsheet_id,
+            &sheet_name,
+            api_key.as_deref(),
+            bearer_token.as_deref(),
+        )?
+    } else {
+        Vec::new()
+    };
+
+    println!("\n✅ 接続成功!\n");
+    println!("📊 スプレッドシート情報:");
+    println!(
+        "  - タイトル: {}",
+        metadata
+            .properties
+            .as_ref()
+            .and_then(|p| p.title.as_deref())
+            .unwrap_or("不明")
+    );
+    println!(
+        "  - シート数: {}",
+        metadata.sheets.as_ref().map_or(0, std::vec::Vec::len)
+    );
+    if let Some(first_sheet) = metadata.sheets.as_ref().and_then(|s| s.first()) {
+        println!(
+            "  - 最初のシート名: {}",
+            first_sheet
+                .properties
+                .as_ref()
+                .and_then(|props| props.title.as_deref())
+                .unwrap_or("不明")
+        );
+        println!(
+            "  - 行数: {}",
+            first_sheet
+                .properties
+                .as_ref()
+                .and_then(|props| props.grid_properties.as_ref())
+                .and_then(|grid| grid.row_count)
+                .map_or("不明".to_string(), |v| v.to_string())
+        );
+        println!(
+            "  - 列数: {}",
+            first_sheet
+                .properties
+                .as_ref()
+                .and_then(|props| props.grid_properties.as_ref())
+                .and_then(|grid| grid.column_count)
+                .map_or("不明".to_string(), |v| v.to_string())
+        );
+    }
+
+    println!("\n📥 ステップ4: データの取得テスト");
+    println!("✅ データの取得に成功しました");
+    println!("  - 取得した行数: {}", rows.len());
+    if let Some(header) = rows.first() {
+        println!("  - ヘッダー行: {}", header.join(", "));
+        println!("  - データ行数: {}", rows.len().saturating_sub(1));
+    }
+
+    println!("\n🔍 ステップ5: データ形式の検証");
+    if rows.len() < 2 {
+        println!("⚠️  データ行が不足しています");
+        println!("   ヘッダー行とデータ行が必要です");
+    } else if rows[0].len() < 3 {
+        println!("⚠️  列数が不足しています");
+        println!("   最低でも key, description, 言語1 の3列が必要です");
+        println!("   現在の列数: {}", rows[0].len());
+    } else {
+        println!("✅ データ形式は正常です");
+        println!("   - ロケール数: {}", rows[0].len() - 2);
+        println!("   - ロケール: {}", rows[0][2..].join(", "));
+    }
+
+    println!("\n🎉 すべての診断テストに合格しました!");
+    println!("\n次のステップ:");
+    println!("  cargo run --manifest-path rust/l10n-rust/Cargo.toml -- --config {config_path}");
+    Ok(())
+}
+
+fn run_oauth2_helper() -> Result<()> {
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("🔑 OAuth2 トークン取得ヘルパー (Rust)");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    let client_id = prompt_input("Client ID: ")?;
+    let client_secret = prompt_input("Client Secret: ")?;
+    if client_id.trim().is_empty() || client_secret.trim().is_empty() {
+        bail!("Client IDとClient Secretは必須です");
+    }
+
+    let redirect_uri = "http://localhost:3000/oauth2callback";
+    let auth_url = build_google_oauth_authorize_url(&client_id, redirect_uri)?;
+
+    println!("以下のURLをブラウザで開いて認証してください:");
+    println!("{auth_url}\n");
+
+    println!("ローカルサーバーを起動して認証コードを待機中... (http://localhost:3000)");
+    let code = wait_for_oauth_code()?;
+    println!("✅ 認証コードを取得しました");
+
+    let token = exchange_oauth_authorization_code(&client_id, &client_secret, redirect_uri, &code)?;
+
+    println!("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    println!("✅ トークンの取得に成功しました!");
+    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    println!("oauth2:");
+    println!("  clientId: {client_id}");
+    println!("  clientSecret: {client_secret}");
+    println!("  redirectUri: {redirect_uri}");
+    if let Some(refresh_token) = token.refresh_token.as_deref() {
+        println!("  refreshToken: {refresh_token}");
+    } else {
+        println!("  # refreshToken: 未取得（prompt=consent や権限再付与を確認してください）");
+    }
+    println!("  accessToken: {}", token.access_token);
+    if let Some(expires_in) = token.expires_in {
+        println!("  # expiresIn: {expires_in} seconds");
+    }
+
+    Ok(())
 }
 
 fn resolve_absolute_path(path: &str) -> Result<PathBuf> {
@@ -304,15 +586,8 @@ fn fetch_sheet_values_inner(
     api_key: Option<&str>,
     bearer_token: Option<&str>,
 ) -> Result<Vec<Vec<String>>> {
-    let spreadsheet_id = extract_spreadsheet_id(spreadsheet_input)
-        .ok_or_else(|| anyhow!("Invalid Google Sheets URL or ID"))?;
-
-    let metadata_url = build_sheet_api_url(
-        &format!("https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}"),
-        api_key,
-    );
-    let metadata: SpreadsheetMetadata = fetch_google_json(&metadata_url, bearer_token)
-        .with_context(|| format!("Failed to fetch spreadsheet metadata: {spreadsheet_id}"))?;
+    let (spreadsheet_id, metadata) =
+        fetch_sheet_metadata(spreadsheet_input, api_key, bearer_token)?;
 
     let sheet_name = metadata
         .sheets
@@ -322,18 +597,7 @@ fn fetch_sheet_values_inner(
         .and_then(|props| props.title.clone())
         .unwrap_or_else(|| "Sheet1".to_string());
 
-    let values_url = build_sheet_api_url(
-        &format!(
-            "https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{}",
-            urlencoding::encode(&sheet_name)
-        ),
-        api_key,
-    );
-
-    let values: SpreadsheetValues = fetch_google_json(&values_url, bearer_token)
-        .with_context(|| format!("Failed to fetch spreadsheet values: {spreadsheet_id}"))?;
-
-    Ok(values.values.unwrap_or_default())
+    fetch_sheet_values_by_id(&spreadsheet_id, &sheet_name, api_key, bearer_token)
 }
 
 fn build_sheet_api_url(base: &str, api_key: Option<&str>) -> String {
@@ -341,6 +605,40 @@ fn build_sheet_api_url(base: &str, api_key: Option<&str>) -> String {
         Some(key) => format!("{base}?key={key}"),
         None => base.to_string(),
     }
+}
+
+fn fetch_sheet_metadata(
+    spreadsheet_input: &str,
+    api_key: Option<&str>,
+    bearer_token: Option<&str>,
+) -> Result<(String, SpreadsheetMetadata)> {
+    let spreadsheet_id = extract_spreadsheet_id(spreadsheet_input)
+        .ok_or_else(|| anyhow!("Invalid Google Sheets URL or ID"))?;
+    let metadata_url = build_sheet_api_url(
+        &format!("https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}"),
+        api_key,
+    );
+    let metadata: SpreadsheetMetadata = fetch_google_json(&metadata_url, bearer_token)
+        .with_context(|| format!("Failed to fetch spreadsheet metadata: {spreadsheet_id}"))?;
+    Ok((spreadsheet_id, metadata))
+}
+
+fn fetch_sheet_values_by_id(
+    spreadsheet_id: &str,
+    sheet_name: &str,
+    api_key: Option<&str>,
+    bearer_token: Option<&str>,
+) -> Result<Vec<Vec<String>>> {
+    let values_url = build_sheet_api_url(
+        &format!(
+            "https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{}",
+            urlencoding::encode(sheet_name)
+        ),
+        api_key,
+    );
+    let values: SpreadsheetValues = fetch_google_json(&values_url, bearer_token)
+        .with_context(|| format!("Failed to fetch spreadsheet values: {spreadsheet_id}"))?;
+    Ok(values.values.unwrap_or_default())
 }
 
 fn fetch_google_json<T: DeserializeOwned>(url: &str, bearer_token: Option<&str>) -> Result<T> {
@@ -487,6 +785,98 @@ fn fetch_access_token_with_oauth2(oauth2: &Oauth2Config) -> Result<String> {
         .json::<OAuthTokenResponse>()
         .with_context(|| "Failed to parse OAuth2 token response")?;
     Ok(token.access_token)
+}
+
+fn build_google_oauth_authorize_url(client_id: &str, redirect_uri: &str) -> Result<String> {
+    let mut url = Url::parse("https://accounts.google.com/o/oauth2/v2/auth")
+        .with_context(|| "Failed to build OAuth authorize URL")?;
+    url.query_pairs_mut()
+        .append_pair("response_type", "code")
+        .append_pair("client_id", client_id)
+        .append_pair("redirect_uri", redirect_uri)
+        .append_pair(
+            "scope",
+            "https://www.googleapis.com/auth/spreadsheets.readonly",
+        )
+        .append_pair("access_type", "offline")
+        .append_pair("prompt", "consent");
+    Ok(url.to_string())
+}
+
+fn wait_for_oauth_code() -> Result<String> {
+    let server = Server::http("127.0.0.1:3000")
+        .map_err(|error| anyhow!("Failed to start local server on :3000: {error}"))?;
+
+    for request in server.incoming_requests() {
+        let request_url: &str = request.url();
+        let callback_url = format!("http://localhost{request_url}");
+        if let Some(code) = parse_code_from_callback_url(&callback_url) {
+            let response =
+                Response::from_string("認証成功! このタブを閉じて、ターミナルに戻ってください。")
+                    .with_status_code(StatusCode(200));
+            let _ = request.respond(response);
+            return Ok(code);
+        }
+
+        let response =
+            Response::from_string("Not Found. /oauth2callback?code=... を呼び出してください。")
+                .with_status_code(StatusCode(404));
+        let _ = request.respond(response);
+    }
+
+    bail!("OAuth2認証コードを取得できませんでした")
+}
+
+fn parse_code_from_callback_url(callback_url: &str) -> Option<String> {
+    let url = Url::parse(callback_url).ok()?;
+    if url.path() != "/oauth2callback" {
+        return None;
+    }
+    url.query_pairs()
+        .find_map(|(key, value)| (key == "code").then(|| value.to_string()))
+}
+
+fn exchange_oauth_authorization_code(
+    client_id: &str,
+    client_secret: &str,
+    redirect_uri: &str,
+    code: &str,
+) -> Result<OAuthTokenResponse> {
+    let token_endpoint = "https://oauth2.googleapis.com/token";
+    let response = reqwest::blocking::Client::new()
+        .post(token_endpoint)
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("client_id", client_id),
+            ("client_secret", client_secret),
+            ("redirect_uri", redirect_uri),
+        ])
+        .send()
+        .with_context(|| "Failed to exchange OAuth2 authorization code")?;
+
+    if !response.status().is_success() {
+        let status_text = response.status().to_string();
+        let body = response.text().unwrap_or_default();
+        let message = extract_oauth_error_message(&body).unwrap_or(status_text);
+        bail!("{message}");
+    }
+
+    response
+        .json::<OAuthTokenResponse>()
+        .with_context(|| "Failed to parse OAuth2 code exchange response")
+}
+
+fn prompt_input(message: &str) -> Result<String> {
+    print!("{message}");
+    io::stdout()
+        .flush()
+        .with_context(|| "Failed to flush stdout")?;
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .with_context(|| "Failed to read stdin")?;
+    Ok(input.trim().to_string())
 }
 
 fn extract_oauth_error_message(body: &str) -> Option<String> {
@@ -899,5 +1289,12 @@ mod tests {
         };
         let token = fetch_access_token_with_oauth2(&config).expect("token should be resolved");
         assert_eq!(token, "test-access-token");
+    }
+
+    #[test]
+    fn parse_code_from_callback_url_extracts_code() {
+        let code =
+            parse_code_from_callback_url("http://localhost/oauth2callback?code=abc123&scope=test");
+        assert_eq!(code, Some("abc123".to_string()));
     }
 }
