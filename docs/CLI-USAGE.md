@@ -32,13 +32,35 @@ l10n-generator diagnose
 l10n-generator diagnose --config test.config.yaml
 ```
 
-### 3. ヘルプの表示
+### 3. OAuth2ヘルパー
+
+OAuth2トークンを対話的に取得します:
+
+```bash
+l10n-generator oauth2-helper
+```
+
+### 4. 実行エンジンの指定
+
+`--engine` で実行エンジンを切り替えできます。
+
+```bash
+# TypeScript実装を強制
+l10n-generator --engine ts --config custom.config.yaml
+
+# Rust実装を強制
+l10n-generator --engine rust --config custom.config.yaml
+```
+
+`--engine auto`（デフォルト）は、Rust CLIが利用可能ならRust、なければTypeScriptで実行します。
+
+### 5. ヘルプの表示
 
 ```bash
 l10n-generator --help
 ```
 
-### 4. バージョンの表示
+### 6. バージョンの表示
 
 ```bash
 l10n-generator --version
@@ -221,7 +243,10 @@ l10n-generator --config sheet.config.yaml
 ### Google Sheets + JWT 認証の場合
 
 ```bash
-# JWTの場合は診断コマンドは使えません
+# JWTでも診断コマンドを利用できます
+l10n-generator diagnose --config jwt.config.yaml
+
+# 生成実行
 l10n-generator --config jwt.config.yaml
 ```
 

@@ -34,7 +34,7 @@ outputType: both
 YAML
 
 pnpm -s build
-node "$ROOT_DIR/lib/cli.js" --config "$TS_CONFIG" >/dev/null
+node "$ROOT_DIR/lib/cli.js" --engine ts --config "$TS_CONFIG" >/dev/null
 cargo run --manifest-path "$ROOT_DIR/rust/l10n-rust/Cargo.toml" -- --config "$RS_CONFIG" >/dev/null
 
 ts_listing="$(cd "$TS_OUT" && ls -1 | sort)"

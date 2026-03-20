@@ -18,6 +18,7 @@
 - `oauth2-helper` サブコマンド
 - TS/Rust 生成結果の一致検証コマンド（`pnpm run rust:parity`）
 - Rust 検証用 GitHub Actions（`.github/workflows/rust-validation.yaml`）
+- Node CLI の実行エンジン切り替え（`--engine auto|ts|rust`）
 
 ### 未対応
 

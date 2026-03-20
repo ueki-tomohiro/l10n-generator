@@ -9,6 +9,8 @@
 import { OAuth2Client } from "google-auth-library";
 import http from "http";
 import { URL } from "url";
+import path from "path";
+import { fileURLToPath } from "url";
 import open from "open";
 import readline from "readline";
 
@@ -135,7 +137,7 @@ async function getTokens(oauth2Client: OAuth2Client): Promise<void> {
 /**
  * メイン処理
  */
-async function main() {
+export async function runOauth2Helper() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("🔑 OAuth2 トークン取得ヘルパー");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -169,7 +171,13 @@ async function main() {
   }
 }
 
+const executedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
+const currentPath = fileURLToPath(import.meta.url);
+
 // スクリプトとして実行された場合のみ実行
-if (require.main === module) {
-  main();
+if (executedPath && executedPath === currentPath) {
+  runOauth2Helper().catch((error) => {
+    console.error("\n❌ エラーが発生しました:", (error as Error).message);
+    process.exit(1);
+  });
 }

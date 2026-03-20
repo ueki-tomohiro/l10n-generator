@@ -218,7 +218,7 @@ export const translation: Translation = {
 2. トークン取得ヘルパーを実行してトークンを取得
 
    ```bash
-   node lib/helpers/oauth2-helper.js
+   l10n-generator oauth2-helper
    ```
 
 3. 取得したトークンを設定ファイルに追加
@@ -238,19 +238,22 @@ export const translation: Translation = {
 l10n-generator [オプション]
 
 コマンド:
-  l10n-generator diagnose  Google Sheets API接続の診断
+  l10n-generator diagnose       Google Sheets API接続の診断
+  l10n-generator oauth2-helper  OAuth2トークン取得ヘルパー
 
 オプション:
-  --config     設定ファイルのパス (デフォルト: l10n-generator.config.yaml)
-  --diagnose   接続診断を実行
-  -h, --help   ヘルプを表示
-  --version    バージョンを表示
+  --config           設定ファイルのパス (デフォルト: l10n-generator.config.yaml)
+  --engine           実行エンジン (auto|ts|rust, デフォルト: auto)
+  -h, --help         ヘルプを表示
+  --version          バージョンを表示
 
 例:
   l10n-generator                          デフォルト設定ファイルで生成
   l10n-generator --config custom.yaml     カスタム設定で生成
   l10n-generator diagnose                 test.config.yamlで診断実行
   l10n-generator diagnose --config custom.yaml  カスタム設定で診断
+  l10n-generator oauth2-helper            OAuth2トークン取得
+  l10n-generator --engine ts --config custom.yaml  TypeScript実装を強制
 ```
 
 ### 診断コマンド
