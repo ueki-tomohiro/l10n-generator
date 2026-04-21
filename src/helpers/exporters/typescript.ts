@@ -3,6 +3,8 @@ import lodash from "lodash";
 
 const { camelCase } = lodash;
 
+const asQuotedProperty = (key: string) => JSON.stringify(key);
+
 const createInputParameterFunction = (key: string, text: string) => {
   if (!text) return undefined;
   const matches = text.match(/\{\w+\}/g);
@@ -11,7 +13,7 @@ const createInputParameterFunction = (key: string, text: string) => {
 
   return `export const ${camelCase(key)} = (t: Translation, params: { ${params
     .map((p) => `${p}: string;`)
-    .join(" ")} }) => t.${key}${params.map((p) => `.replaceAll("{${p}}", params.${p})`).join("")};`;
+    .join(" ")} }) => t[${asQuotedProperty(key)}]${params.map((p) => `.replaceAll("{${p}}", params.${p})`).join("")};`;
 };
 
 export const createTypeScriptL10nFiles = async (localizePath: string, values: string[][]) => {
@@ -33,7 +35,7 @@ export const createTypeScriptL10nFiles = async (localizePath: string, values: st
   /**
    * ${firstTranslation.replace(/\s/g, "")}: ${description}
    */
-  ${key}: string;`;
+  ${asQuotedProperty(key)}: string;`;
   });
 
   fs.writeFileSync(`${localizePath}translation.ts`, `export interface Translation {${types.join("\n")}\n}`);

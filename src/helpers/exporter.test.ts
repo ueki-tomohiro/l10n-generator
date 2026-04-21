@@ -8,6 +8,7 @@ import {
   basicTestData,
   paramTestData,
   multiLocaleTestData,
+  dotKeyTestData,
 } from "../test-helpers/test-utils.js";
 
 describe("createL10nFile", () => {
@@ -159,8 +160,8 @@ describe("createTypeScriptL10nFiles", () => {
     const content = fs.readFileSync(tsPath, "utf-8");
 
     expect(content).toContain("export interface Translation");
-    expect(content).toContain("hello: string;");
-    expect(content).toContain("goodbye: string;");
+    expect(content).toContain('"hello": string;');
+    expect(content).toContain('"goodbye": string;');
     expect(content).toContain("* こんにちは: Greeting");
     expect(content).toContain("* さようなら: Farewell");
   });
@@ -185,6 +186,26 @@ describe("createTypeScriptL10nFiles", () => {
     expect(content).toContain("export const errorCount");
     expect(content).toContain("params: { count: string; }");
     expect(content).toContain('.replaceAll("{count}", params.count)');
+  });
+
+  it("dot keyをquoted propertyとbracket accessで生成する", async () => {
+    const values = JSON.parse(JSON.stringify(dotKeyTestData));
+
+    await createTypeScriptL10nFiles(`${tempDir}/`, values);
+
+    const translationContent = fs.readFileSync(path.join(tempDir, "translation.ts"), "utf-8");
+    expect(translationContent).toContain('"auth.signIn": string;');
+    expect(translationContent).toContain('"common.count": string;');
+
+    const funcContent = fs.readFileSync(path.join(tempDir, "translateFunction.ts"), "utf-8");
+    expect(funcContent).toContain('export const commonCount');
+    expect(funcContent).toContain('t["common.count"]');
+    expect(funcContent).toContain('.replaceAll("{count}", params.count)');
+    expect(funcContent).not.toContain("t.common.count");
+
+    const jaContent = fs.readFileSync(path.join(tempDir, "ja.ts"), "utf-8");
+    expect(jaContent).toContain('"auth.signIn": "ログイン"');
+    expect(jaContent).toContain('"common.count": "{count}件"');
   });
 
   it("パラメータなしのキーにはヘルパー関数を生成しない", async () => {

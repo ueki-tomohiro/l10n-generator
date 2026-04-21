@@ -10,6 +10,7 @@ import {
   basicTestData,
   paramTestData,
   multiLocaleTestData,
+  dotKeyTestData,
 } from "./test-helpers/test-utils.js";
 
 describe("cli - End-to-End", () => {
@@ -79,8 +80,8 @@ describe("cli - End-to-End", () => {
     // 内容を検証
     const translationContent = fs.readFileSync(path.join(outputDir, "translation.ts"), "utf-8");
     expect(translationContent).toContain("export interface Translation");
-    expect(translationContent).toContain("hello: string;");
-    expect(translationContent).toContain("goodbye: string;");
+    expect(translationContent).toContain('"hello": string;');
+    expect(translationContent).toContain('"goodbye": string;');
 
     const jaContent = fs.readFileSync(path.join(outputDir, "ja.ts"), "utf-8");
     expect(jaContent).toContain("export const translation: Translation =");
@@ -144,6 +145,32 @@ describe("cli - End-to-End", () => {
 
     expect(funcContent).toContain("export const errorCount");
     expect(funcContent).toContain("params: { count: string; }");
+  });
+
+  it("dot key付きメッセージのTypeScript完全フロー", async () => {
+    const csvPath = createTestCSV(tempDir, dotKeyTestData);
+    const configPath = createTestConfig(tempDir, {
+      fileType: "csv",
+      path: csvPath,
+      credentialType: "none",
+      localizePath: outputDir,
+      outputType: "typescript",
+    });
+
+    await cli(configPath);
+
+    const translationContent = fs.readFileSync(path.join(outputDir, "translation.ts"), "utf-8");
+    expect(translationContent).toContain('"auth.signIn": string;');
+    expect(translationContent).toContain('"common.count": string;');
+
+    const funcContent = fs.readFileSync(path.join(outputDir, "translateFunction.ts"), "utf-8");
+    expect(funcContent).toContain('export const commonCount');
+    expect(funcContent).toContain('t["common.count"]');
+    expect(funcContent).not.toContain("t.common.count");
+
+    const jaContent = fs.readFileSync(path.join(outputDir, "ja.ts"), "utf-8");
+    expect(jaContent).toContain('"auth.signIn": "ログイン"');
+    expect(jaContent).toContain('"common.count": "{count}件"');
   });
 
   it("複数ロケール（3言語）を処理", async () => {

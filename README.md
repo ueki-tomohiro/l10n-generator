@@ -136,11 +136,15 @@ export interface Translation {
   /**
    * こんにちは: Greeting
    */
-  hello: string;
+  "hello": string;
   /**
    * ようこそ、{name}さん: Welcome message
    */
-  welcome: string;
+  "welcome": string;
+  /**
+   * {count}件: Count label
+   */
+  "common.count": string;
 }
 ```
 
@@ -152,6 +156,7 @@ import { Translation } from "./translation";
 export const translation: Translation = {
   hello: "こんにちは",
   welcome: "ようこそ、{name}さん",
+  "common.count": "{count}件",
 };
 ```
 

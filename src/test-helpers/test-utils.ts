@@ -93,6 +93,15 @@ export const paramTestData = [
 ];
 
 /**
+ * dot key付きテストデータ
+ */
+export const dotKeyTestData = [
+  ["key", "description", "ja", "en"],
+  ["auth.signIn", "Sign in label", "ログイン", "Sign in"],
+  ["common.count", "Count label", "{count}件", "{count} items"],
+];
+
+/**
  * 複数ロケールテストデータ
  */
 export const multiLocaleTestData = [
