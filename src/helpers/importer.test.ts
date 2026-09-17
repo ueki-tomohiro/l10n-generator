@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { importValues } from "./importer.js";
 import path from "path";
+import { createRequire } from "module";
+
+const { utils, writeFile } = createRequire(import.meta.url)("xlsx") as typeof import("xlsx");
 import {
   createTempDir,
   cleanupTempDir,
@@ -186,6 +189,131 @@ describe("importValues - CSV", () => {
     } finally {
       cleanupTempDir(tempDir);
     }
+  });
+});
+
+describe("importValues - xlsx", () => {
+  /** テスト用の xlsx ファイルを作成する */
+  const createTestXlsx = (dir: string, rows: string[][], sheetName = "sheet"): string => {
+    const filePath = path.join(dir, "test.xlsx");
+    const worksheet = utils.aoa_to_sheet(rows);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, sheetName);
+    writeFile(workbook, filePath);
+    return filePath;
+  };
+
+  it("ヘッダー行を含めた生の2次元配列を読み込む", async () => {
+    const tempDir = createTempDir();
+    const xlsxPath = createTestXlsx(tempDir, basicTestData);
+
+    try {
+      const values = await importValues({
+        fileType: "xlsx" as const,
+        path: xlsxPath,
+        credentialType: "none" as const,
+        localizePath: "./output/",
+      });
+
+      expect(values).toEqual(basicTestData);
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
+  it("ヘッダーセルが空でも列位置が保たれる", async () => {
+    const tempDir = createTempDir();
+    const rows = [
+      ["カテゴリ", "", "", "", ""],
+      ["画面", "hello", "こんにちは", "Hello", "Greeting"],
+    ];
+    const xlsxPath = createTestXlsx(tempDir, rows);
+
+    try {
+      const values = await importValues({
+        fileType: "xlsx" as const,
+        path: xlsxPath,
+        credentialType: "none" as const,
+        localizePath: "./output/",
+      });
+
+      expect(values[1]).toEqual(["画面", "hello", "こんにちは", "Hello", "Greeting"]);
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
+  it("sheetName でシートを選択する", async () => {
+    const tempDir = createTempDir();
+    const xlsxPath = createTestXlsx(tempDir, basicTestData, "translations");
+
+    try {
+      const values = await importValues({
+        fileType: "xlsx" as const,
+        path: xlsxPath,
+        credentialType: "none" as const,
+        localizePath: "./output/",
+        sheetName: "translations",
+      });
+
+      expect(values).toEqual(basicTestData);
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
+  it("存在しないシート名でエラー", async () => {
+    const tempDir = createTempDir();
+    const xlsxPath = createTestXlsx(tempDir, basicTestData);
+
+    try {
+      await expect(
+        importValues({
+          fileType: "xlsx" as const,
+          path: xlsxPath,
+          credentialType: "none" as const,
+          localizePath: "./output/",
+          sheetName: "missing",
+        })
+      ).rejects.toThrow("シートが見つかりません");
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
+  it("空行を詰めずに物理的な行位置を保つ", async () => {
+    const tempDir = createTempDir();
+    const rows = [
+      ["カテゴリ", "", "", "", ""],
+      ["", "", "", "", ""],
+      ["画面", "hello", "こんにちは", "Hello", "Greeting"],
+    ];
+    const xlsxPath = createTestXlsx(tempDir, rows);
+
+    try {
+      const values = await importValues({
+        fileType: "xlsx" as const,
+        path: xlsxPath,
+        credentialType: "none" as const,
+        localizePath: "./output/",
+      });
+
+      expect(values.length).toBe(3);
+      expect(values[2]).toEqual(["画面", "hello", "こんにちは", "Hello", "Greeting"]);
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
+  it("存在しないファイルでエラー", async () => {
+    await expect(
+      importValues({
+        fileType: "xlsx" as const,
+        path: "/nonexistent/path/to/file.xlsx",
+        credentialType: "none" as const,
+        localizePath: "./output/",
+      })
+    ).rejects.toThrow("xlsxファイルが見つかりません");
   });
 });
 

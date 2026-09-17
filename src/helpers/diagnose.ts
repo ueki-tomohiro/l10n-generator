@@ -3,6 +3,7 @@ import yaml from "js-yaml";
 import fetch from "node-fetch";
 import { google } from "googleapis";
 import { Config } from "./type.js";
+import { toSheetRange } from "./sheetRange.js";
 
 interface DiagnoseOptions {
   configFile: string;
@@ -34,9 +35,9 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
     console.log(`  - ファイルタイプ: ${config.fileType}`);
     console.log(`  - 認証方式: ${config.credentialType}`);
 
-    if (config.fileType === "csv") {
-      console.log(`  - CSV Path: ${config.path}\n`);
-      console.log("✓ CSV形式の設定です。診断はGoogle Sheets専用です。");
+    if (config.fileType === "csv" || config.fileType === "xlsx") {
+      console.log(`  - ${config.fileType === "csv" ? "CSV" : "xlsx"} Path: ${config.path}\n`);
+      console.log("✓ ローカルファイルの設定です。診断はGoogle Sheets専用です。");
       console.log("\n次のステップ:");
       console.log(`  node lib/cli.js --config ${configFile}`);
       process.exit(0);
@@ -172,8 +173,8 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
       metadata = (await response.json()) as typeof metadata;
 
       // データの取得
-      const sheetName = metadata.sheets?.[0]?.properties?.title || "Sheet1";
-      const valuesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${config.path}/values/${encodeURIComponent(sheetName)}?key=${config.apiKey}`;
+      const sheetName = config.sheetName ?? (metadata.sheets?.[0]?.properties?.title || "Sheet1");
+      const valuesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${config.path}/values/${encodeURIComponent(toSheetRange(sheetName))}?key=${config.apiKey}`;
 
       const valuesResponse = await fetch(valuesUrl);
       if (!valuesResponse.ok) {
@@ -216,10 +217,10 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
         })),
       };
 
-      const sheetName = spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
+      const sheetName = config.sheetName ?? (spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1");
       const valuesResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: config.path,
-        range: sheetName,
+        range: toSheetRange(sheetName),
       });
 
       rows = (valuesResponse.data.values as string[][]) || [];
@@ -268,10 +269,10 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
         })),
       };
 
-      const sheetName = spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
+      const sheetName = config.sheetName ?? (spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1");
       const valuesResponse = await sheets.spreadsheets.values.get({
         spreadsheetId: config.path,
-        range: sheetName,
+        range: toSheetRange(sheetName),
       });
 
       rows = (valuesResponse.data.values as string[][]) || [];

@@ -1,8 +1,9 @@
 import fetch from "node-fetch";
+import { toSheetRange } from "../sheetRange.js";
 
-type ImportGoogleSpreadSheet = (documentId: string) => Promise<string[][]>;
+type ImportGoogleSpreadSheet = (documentId: string, targetSheetName?: string) => Promise<string[][]>;
 
-export const importGoogleSpreadSheet: ImportGoogleSpreadSheet = async (documentId) => {
+export const importGoogleSpreadSheet: ImportGoogleSpreadSheet = async (documentId, targetSheetName) => {
   // まずスプレッドシート情報を取得して最初のシート名を取得
   const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}`;
   const metadataResponse = await fetch(metadataUrl);
@@ -13,10 +14,10 @@ export const importGoogleSpreadSheet: ImportGoogleSpreadSheet = async (documentI
   }
 
   const metadata = await metadataResponse.json();
-  const sheetName = metadata.sheets?.[0]?.properties?.title || "Sheet1";
+  const sheetName = targetSheetName ?? (metadata.sheets?.[0]?.properties?.title || "Sheet1");
 
   // データを取得
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}/values/${encodeURIComponent(sheetName)}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}/values/${encodeURIComponent(toSheetRange(sheetName))}`;
   const response = await fetch(url);
 
   if (!response.ok) {

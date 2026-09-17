@@ -3,7 +3,16 @@ import lodash from "lodash";
 
 const { camelCase } = lodash;
 
-const asQuotedProperty = (key: string) => JSON.stringify(key);
+// 予約語はプロパティ名として使えるが、識別子として素で書くと紛らわしいものだけ除外する
+const IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+const isSafeIdentifier = (key: string) => IDENTIFIER_PATTERN.test(key);
+
+/** interface のプロパティ名。識別子として有効ならクォートを付けない */
+const asPropertyName = (key: string) => (isSafeIdentifier(key) ? key : JSON.stringify(key));
+
+/** t からの参照式。識別子として有効ならドット記法を使う */
+const asPropertyAccess = (key: string) => (isSafeIdentifier(key) ? `t.${key}` : `t[${JSON.stringify(key)}]`);
 
 const createInputParameterFunction = (key: string, text: string) => {
   if (!text) return undefined;
@@ -13,7 +22,7 @@ const createInputParameterFunction = (key: string, text: string) => {
 
   return `export const ${camelCase(key)} = (t: Translation, params: { ${params
     .map((p) => `${p}: string;`)
-    .join(" ")} }) => t[${asQuotedProperty(key)}]${params.map((p) => `.replaceAll("{${p}}", params.${p})`).join("")};`;
+    .join(" ")} }) => ${asPropertyAccess(key)}${params.map((p) => `.replaceAll("{${p}}", params.${p})`).join("")};`;
 };
 
 export const createTypeScriptL10nFiles = async (localizePath: string, values: string[][]) => {
@@ -35,7 +44,7 @@ export const createTypeScriptL10nFiles = async (localizePath: string, values: st
   /**
    * ${firstTranslation.replace(/\s/g, "")}: ${description}
    */
-  ${asQuotedProperty(key)}: string;`;
+  ${asPropertyName(key)}: string;`;
   });
 
   fs.writeFileSync(`${localizePath}translation.ts`, `export interface Translation {${types.join("\n")}\n}`);

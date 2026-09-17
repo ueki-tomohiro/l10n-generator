@@ -1,9 +1,18 @@
 import { google } from "googleapis";
 import { OAuth2ClientOptions } from "google-auth-library";
+import { toSheetRange } from "../sheetRange.js";
 
-type ImportGoogleSpreadSheetWithOAuth2 = (url: string, option?: OAuth2ClientOptions) => Promise<string[][]>;
+type ImportGoogleSpreadSheetWithOAuth2 = (
+  url: string,
+  option?: OAuth2ClientOptions,
+  targetSheetName?: string
+) => Promise<string[][]>;
 
-export const importGoogleSpreadSheetWithOAuth2: ImportGoogleSpreadSheetWithOAuth2 = async (url, option) => {
+export const importGoogleSpreadSheetWithOAuth2: ImportGoogleSpreadSheetWithOAuth2 = async (
+  url,
+  option,
+  targetSheetName
+) => {
   if (!option) {
     throw new Error("OAuth2 credentials are required");
   }
@@ -50,21 +59,24 @@ export const importGoogleSpreadSheetWithOAuth2: ImportGoogleSpreadSheetWithOAuth
     spreadsheetId,
   });
 
-  let range: string;
+  let sheetName: string;
   const sheetNameMatch = url.match(/[#&]gid=(\d+)/);
 
-  if (sheetNameMatch) {
+  if (targetSheetName) {
+    // 設定で明示されたシート名を優先する
+    sheetName = targetSheetName;
+  } else if (sheetNameMatch) {
     // gidがある場合は、対応するシート名を取得
     const sheet = spreadsheet.data.sheets?.find((s) => s.properties?.sheetId?.toString() === sheetNameMatch[1]);
-    range = sheet?.properties?.title || spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
+    sheetName = sheet?.properties?.title || spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
   } else {
     // gidがない場合は最初のシートを使用
-    range = spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
+    sheetName = spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";
   }
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range,
+    range: toSheetRange(sheetName),
   });
 
   return response.data.values as string[][];

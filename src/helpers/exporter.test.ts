@@ -160,8 +160,10 @@ describe("createTypeScriptL10nFiles", () => {
     const content = fs.readFileSync(tsPath, "utf-8");
 
     expect(content).toContain("export interface Translation");
-    expect(content).toContain('"hello": string;');
-    expect(content).toContain('"goodbye": string;');
+    // 識別子として有効なキーはクォートなしで出力する
+    expect(content).toContain("hello: string;");
+    expect(content).toContain("goodbye: string;");
+    expect(content).not.toContain('"hello": string;');
     expect(content).toContain("* こんにちは: Greeting");
     expect(content).toContain("* さようなら: Farewell");
   });
@@ -177,9 +179,10 @@ describe("createTypeScriptL10nFiles", () => {
     // インポート文
     expect(content).toContain('import { Translation } from "./translation"');
 
-    // welcome関数
+    // welcome関数（識別子として有効なキーはドット記法で参照する）
     expect(content).toContain("export const welcome");
     expect(content).toContain("params: { name: string; }");
+    expect(content).toContain("=> t.welcome");
     expect(content).toContain('.replaceAll("{name}", params.name)');
 
     // error_count関数（camelCase変換）
@@ -198,7 +201,7 @@ describe("createTypeScriptL10nFiles", () => {
     expect(translationContent).toContain('"common.count": string;');
 
     const funcContent = fs.readFileSync(path.join(tempDir, "translateFunction.ts"), "utf-8");
-    expect(funcContent).toContain('export const commonCount');
+    expect(funcContent).toContain("export const commonCount");
     expect(funcContent).toContain('t["common.count"]');
     expect(funcContent).toContain('.replaceAll("{count}", params.count)');
     expect(funcContent).not.toContain("t.common.count");
