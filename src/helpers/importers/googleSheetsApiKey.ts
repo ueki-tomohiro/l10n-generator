@@ -1,8 +1,16 @@
 import fetch from "node-fetch";
 
-type ImportGoogleSpreadSheetWithAPIKey = (documentId: string, apiKey?: string) => Promise<string[][]>;
+type ImportGoogleSpreadSheetWithAPIKey = (
+  documentId: string,
+  apiKey?: string,
+  targetSheetName?: string
+) => Promise<string[][]>;
 
-export const importGoogleSpreadSheetWithAPIKey: ImportGoogleSpreadSheetWithAPIKey = async (documentId, apiKey) => {
+export const importGoogleSpreadSheetWithAPIKey: ImportGoogleSpreadSheetWithAPIKey = async (
+  documentId,
+  apiKey,
+  targetSheetName
+) => {
   if (!apiKey) {
     throw new Error("API key is required");
   }
@@ -33,7 +41,7 @@ export const importGoogleSpreadSheetWithAPIKey: ImportGoogleSpreadSheetWithAPIKe
   }
 
   const metadata = await metadataResponse.json();
-  const sheetName = metadata.sheets?.[0]?.properties?.title || "Sheet1";
+  const sheetName = targetSheetName ?? (metadata.sheets?.[0]?.properties?.title || "Sheet1");
 
   // データを取得
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}/values/${encodeURIComponent(sheetName)}?key=${apiKey}`;

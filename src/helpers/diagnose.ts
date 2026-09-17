@@ -34,9 +34,9 @@ export async function diagnose(options: DiagnoseOptions): Promise<void> {
     console.log(`  - ファイルタイプ: ${config.fileType}`);
     console.log(`  - 認証方式: ${config.credentialType}`);
 
-    if (config.fileType === "csv") {
-      console.log(`  - CSV Path: ${config.path}\n`);
-      console.log("✓ CSV形式の設定です。診断はGoogle Sheets専用です。");
+    if (config.fileType === "csv" || config.fileType === "xlsx") {
+      console.log(`  - ${config.fileType === "csv" ? "CSV" : "xlsx"} Path: ${config.path}\n`);
+      console.log("✓ ローカルファイルの設定です。診断はGoogle Sheets専用です。");
       console.log("\n次のステップ:");
       console.log(`  node lib/cli.js --config ${configFile}`);
       process.exit(0);

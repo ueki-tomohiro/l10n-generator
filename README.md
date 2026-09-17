@@ -74,6 +74,8 @@ welcome,Welcome message,ようこそ、{name}さん,"Welcome, {name}"
 - 2列目: 説明
 - 3列目以降: 各言語の翻訳テキスト
 
+この並び順に合わないデータは、`columns` で列を明示的にマッピングできます（後述の[列レイアウトのカスタマイズ](#列レイアウトのカスタマイズ)を参照）。
+
 ### 3. 実行
 
 ```bash
@@ -166,11 +168,48 @@ export const translation: Translation = {
 
 | フィールド       | 型                                        | 必須 | 説明                                  |
 | ---------------- | ----------------------------------------- | ---- | ------------------------------------- |
-| `fileType`       | `"csv" \| "sheet"`                        | ✅   | データソースの種類                    |
+| `fileType`       | `"csv" \| "xlsx" \| "sheet"`              | ✅   | データソースの種類                    |
 | `path`           | `string`                                  | ✅   | ファイルパスまたはGoogle Sheet ID/URL |
 | `credentialType` | `"none" \| "apiKey" \| "oauth2" \| "jwt"` | ✅   | 認証方式                              |
 | `localizePath`   | `string`                                  | ✅   | 出力先ディレクトリ                    |
 | `outputType`     | `"dart" \| "typescript" \| "both"`        | -    | 出力形式（デフォルト: `dart`）        |
+| `sheetName`      | `string`                                  | -    | シート名（既定: 先頭シート）          |
+| `skipRows`       | `number`                                  | -    | 読み飛ばす先頭行数（既定: `0`）       |
+| `columns`        | `ColumnMapping`                           | -    | 列レイアウトの明示指定                |
+
+### 列レイアウトのカスタマイズ
+
+既定では「1行目がヘッダー、列は `key`, `description`, ロケール…の順」を前提とします。
+この形に合わないスプレッドシートは `columns` と `skipRows` で対応できます。
+
+例えば次のようなシート（ヘッダーが2行あり、A列は無視したい）の場合:
+
+| A（分類） | B（キー）  | C（日本語） | D（英語） | E（説明）   |
+| --------- | ---------- | ----------- | --------- | ----------- |
+| 画面      | key        | ja          | en        | description |
+| 画面      | helloWorld | こんにちは  | Hello     | Greeting    |
+
+```yaml
+fileType: xlsx
+path: ./sheet.xlsx
+sheetName: sheet
+credentialType: none
+localizePath: ./src/i18n/
+outputType: typescript
+skipRows: 2 # 先頭2行はヘッダーなので読み飛ばす
+columns:
+  key: B # 列レター、または0始まりの数値インデックス(1)でも可
+  description: E
+  locales:
+    ja: C
+    en: D
+```
+
+- `columns.key`（必須）: キーの列
+- `columns.description`（任意）: 説明の列。省略すると説明は空になります
+- `columns.locales`（必須）: 出力ファイル名（ロケール）と列の対応。**定義順**が出力順になります
+- 列は `"B"` のような列レターでも、`1` のような0始まりの数値インデックスでも指定できます
+- `columns` を指定しない場合は従来どおりの固定レイアウトとして扱われます
 
 ### 設定例
 
@@ -178,6 +217,7 @@ export const translation: Translation = {
 
 - [CSV + Dart](./examples/csv-dart.config.yaml)
 - [CSV + TypeScript](./examples/csv-typescript.config.yaml)
+- [xlsx + 列マッピング](./examples/xlsx-columns.config.yaml)
 - [Google Sheets + API Key](./examples/sheet-apikey.config.yaml)
 - [Google Sheets + OAuth2](./examples/sheet-oauth2.config.yaml)
 - [Google Sheets + JWT](./examples/sheet-jwt.config.yaml)

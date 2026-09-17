@@ -2,9 +2,13 @@ import { google } from "googleapis";
 import { JWTOptions } from "google-auth-library";
 import fs from "fs";
 
-type ImportGoogleSpreadSheetWithJWT = (url: string, option?: JWTOptions | string) => Promise<string[][]>;
+type ImportGoogleSpreadSheetWithJWT = (
+  url: string,
+  option?: JWTOptions | string,
+  targetSheetName?: string
+) => Promise<string[][]>;
 
-export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = async (url, option) => {
+export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = async (url, option, targetSheetName) => {
   if (!option) {
     throw new Error("JWT credentials are required");
   }
@@ -62,7 +66,10 @@ export const importGoogleSpreadSheetWithJWT: ImportGoogleSpreadSheetWithJWT = as
   let range: string;
   const sheetNameMatch = url.match(/[#&]gid=(\d+)/);
 
-  if (sheetNameMatch) {
+  if (targetSheetName) {
+    // 設定で明示されたシート名を優先する
+    range = targetSheetName;
+  } else if (sheetNameMatch) {
     // gidがある場合は、対応するシート名を取得
     const sheet = spreadsheet.data.sheets?.find((s) => s.properties?.sheetId?.toString() === sheetNameMatch[1]);
     range = sheet?.properties?.title || spreadsheet.data.sheets?.[0]?.properties?.title || "Sheet1";

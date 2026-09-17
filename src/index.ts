@@ -2,6 +2,7 @@ import { importValues } from "./helpers/importer.js";
 import { createL10nFile, createTypeScriptL10nFiles } from "./helpers/exporter.js";
 import { loadConfig } from "./helpers/config-loader.js";
 import { SupportLocale } from "./helpers/localization.js";
+import { normalizeValues } from "./helpers/normalizer.js";
 
 /**
  * ヘッダー行からロケールリストを抽出
@@ -68,14 +69,21 @@ export const cli = async (configPath: string = "l10n-generator.config.yaml"): Pr
 
     // 2. データインポート
     console.log("データをインポート中...");
-    const values = await importValues(config);
-    console.log(`  - ${values.length}行のデータを読み込みました\n`);
+    const rawValues = await importValues(config);
+    console.log(`  - ${rawValues.length}行のデータを読み込みました`);
+
+    // 3. 列レイアウトを正規形 [key, description, ...locales] へ変換
+    const values = normalizeValues(config, rawValues);
+    if (config.columns) {
+      console.log(`  - 列マッピングを適用しました (${values.length - 1}件のキー)`);
+    }
+    console.log();
 
     if (values.length < 2) {
       throw new Error("データが不足しています（ヘッダー行とデータ行が必要です）");
     }
 
-    // 3. 出力タイプに応じてエクスポート
+    // 4. 出力タイプに応じてエクスポート
     const outputType = config.outputType || "dart";
 
     switch (outputType) {

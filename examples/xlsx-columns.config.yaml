@@ -1,0 +1,25 @@
+# ローカルの xlsx ファイルから、列を明示的にマッピングして生成する例
+#
+# 想定するシート (ヘッダーが2行あり、A列は生成に使わない):
+#
+#   |  A（分類） | B（キー）  | C（日本語） | D（英語） | E（説明）   |
+#   |  画面      | key        | ja          | en        | description |
+#   |  画面      | helloWorld | こんにちは  | Hello     | Greeting    |
+
+fileType: xlsx
+path: ./sheet.xlsx
+sheetName: sheet # 省略すると先頭シートを使用
+credentialType: none
+localizePath: ./src/i18n/
+outputType: typescript
+
+# 先頭2行はヘッダーなので読み飛ばす
+skipRows: 2
+
+# 列レター("B") でも0始まりの数値インデックス(1) でも指定できる
+columns:
+  key: B
+  description: E
+  locales:
+    ja: C
+    en: D

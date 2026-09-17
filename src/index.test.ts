@@ -80,8 +80,10 @@ describe("cli - End-to-End", () => {
     // 内容を検証
     const translationContent = fs.readFileSync(path.join(outputDir, "translation.ts"), "utf-8");
     expect(translationContent).toContain("export interface Translation");
-    expect(translationContent).toContain('"hello": string;');
-    expect(translationContent).toContain('"goodbye": string;');
+    // 識別子として有効なキーはクォートなしで出力する
+    expect(translationContent).toContain("hello: string;");
+    expect(translationContent).toContain("goodbye: string;");
+    expect(translationContent).not.toContain('"hello": string;');
 
     const jaContent = fs.readFileSync(path.join(outputDir, "ja.ts"), "utf-8");
     expect(jaContent).toContain("export const translation: Translation =");
@@ -164,7 +166,7 @@ describe("cli - End-to-End", () => {
     expect(translationContent).toContain('"common.count": string;');
 
     const funcContent = fs.readFileSync(path.join(outputDir, "translateFunction.ts"), "utf-8");
-    expect(funcContent).toContain('export const commonCount');
+    expect(funcContent).toContain("export const commonCount");
     expect(funcContent).toContain('t["common.count"]');
     expect(funcContent).not.toContain("t.common.count");
 
