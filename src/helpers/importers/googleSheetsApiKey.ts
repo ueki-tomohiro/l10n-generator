@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { toSheetRange } from "../sheetRange.js";
 
 type ImportGoogleSpreadSheetWithAPIKey = (
   documentId: string,
@@ -44,7 +45,7 @@ export const importGoogleSpreadSheetWithAPIKey: ImportGoogleSpreadSheetWithAPIKe
   const sheetName = targetSheetName ?? (metadata.sheets?.[0]?.properties?.title || "Sheet1");
 
   // データを取得
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}/values/${encodeURIComponent(sheetName)}?key=${apiKey}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${documentId}/values/${encodeURIComponent(toSheetRange(sheetName))}?key=${apiKey}`;
   const response = await fetch(url);
 
   if (!response.ok) {

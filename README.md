@@ -1,6 +1,6 @@
 # l10n-generator
 
-> Google SheetsまたはCSVファイルから、Dart ARBファイルとTypeScriptのローカライゼーションファイルを自動生成するCLIツール
+> Google Sheets、CSV、またはXLSXファイルから、Dart ARBファイルとTypeScriptのローカライゼーションファイルを自動生成するCLIツール
 
 [![Issues](https://img.shields.io/github/issues/ueki-tomohiro/l10n-generator?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-generator/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/ueki-tomohiro/l10n-generator?style=flat&color=336791)](https://github.com/ueki-tomohiro/l10n-generator/pulls)
@@ -17,7 +17,7 @@
 
 ## ✨ 特徴
 
-- 📝 **複数のデータソース対応**: CSV、Google Sheets（API Key、OAuth2、JWT認証）
+- 📝 **複数のデータソース対応**: CSV、XLSX、Google Sheets（API Key、OAuth2、JWT認証）
 - 🎯 **複数の出力形式**: Dart ARB、TypeScript型定義 + 各言語ファイル
 - 🔧 **YAML設定ファイル**: シンプルで読みやすい設定
 - 🚀 **npxで即実行**: インストール不要で実行可能

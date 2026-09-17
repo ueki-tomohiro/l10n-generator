@@ -33,6 +33,27 @@ describe("normalizeValues", () => {
     expect(normalizeValues(baseConfig, values)).toEqual(values);
   });
 
+  it("columns 未指定なら完全な空行を除外する", () => {
+    const values = [
+      ["key", "description", "ja", "en"],
+      ["", "", "", ""],
+      ["hello", "Greeting", "こんにちは", "Hello"],
+    ];
+
+    expect(normalizeValues(baseConfig, values)).toEqual([values[0], values[2]]);
+  });
+
+  it("skipRows は空行を含めた物理行数で読み飛ばす", () => {
+    const config: Config = { ...baseConfig, skipRows: 3, columns: senkyakuColumns };
+    const sheet = [senkyakuLikeSheet[0], ["", "", "", "", ""], ...senkyakuLikeSheet.slice(1)];
+
+    expect(normalizeValues(config, sheet)).toEqual([
+      ["key", "description", "ja", "en"],
+      ["hello", "Greeting", "こんにちは", "Hello"],
+      ["goodbye", "Farewell", "さようなら", "Goodbye"],
+    ]);
+  });
+
   it("columns 指定で正規形へ変換する", () => {
     const config: Config = { ...baseConfig, skipRows: 2, columns: senkyakuColumns };
 

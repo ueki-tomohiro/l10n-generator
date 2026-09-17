@@ -33,7 +33,8 @@ export const importXlsx: ImportXlsx = async (filePath, sheetName) => {
 
   return xlsx.utils.sheet_to_json<string[]>(worksheet, {
     header: 1,
-    blankrows: false,
+    // skipRows を物理的な行位置で適用するため、空行も詰めずに残す
+    blankrows: true,
     defval: "",
     raw: false,
   });

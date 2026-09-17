@@ -281,6 +281,30 @@ describe("importValues - xlsx", () => {
     }
   });
 
+  it("空行を詰めずに物理的な行位置を保つ", async () => {
+    const tempDir = createTempDir();
+    const rows = [
+      ["カテゴリ", "", "", "", ""],
+      ["", "", "", "", ""],
+      ["画面", "hello", "こんにちは", "Hello", "Greeting"],
+    ];
+    const xlsxPath = createTestXlsx(tempDir, rows);
+
+    try {
+      const values = await importValues({
+        fileType: "xlsx" as const,
+        path: xlsxPath,
+        credentialType: "none" as const,
+        localizePath: "./output/",
+      });
+
+      expect(values.length).toBe(3);
+      expect(values[2]).toEqual(["画面", "hello", "こんにちは", "Hello", "Greeting"]);
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  });
+
   it("存在しないファイルでエラー", async () => {
     await expect(
       importValues({

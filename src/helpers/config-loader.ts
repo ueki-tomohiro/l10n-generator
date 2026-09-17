@@ -3,6 +3,8 @@ import path from "path";
 import yaml from "js-yaml";
 import { Config } from "./type.js";
 
+const RESERVED_LOCALE_NAMES = ["key", "description", "__proto__"];
+
 export const loadConfig = (configPath: string): Config => {
   // 1. 絶対パス解決
   const absolutePath = path.isAbsolute(configPath) ? configPath : path.resolve(process.cwd(), configPath);
@@ -35,13 +37,26 @@ export const loadConfig = (configPath: string): Config => {
     if (config.columns.key === undefined) {
       throw new Error("columns を指定する場合は columns.key が必要です");
     }
-    if (!config.columns.locales || Object.keys(config.columns.locales).length === 0) {
+    if (
+      !config.columns.locales ||
+      typeof config.columns.locales !== "object" ||
+      Array.isArray(config.columns.locales) ||
+      Object.keys(config.columns.locales).length === 0
+    ) {
       throw new Error("columns を指定する場合は columns.locales を1件以上指定してください");
     }
-    // ロケール名はそのまま出力ファイル名になるため、パス区切りなどを弾く
     Object.keys(config.columns.locales).forEach((locale) => {
+      // ロケール名はそのまま出力ファイル名になるため、パス区切りなどを弾く
       if (!/^[A-Za-z0-9_-]+$/.test(locale)) {
         throw new Error(`columns.locales のロケール名に使用できない文字が含まれています: ${locale}`);
+      }
+      // 整数形式のキーは Object.entries で先頭に並び替えられ、定義順が崩れる
+      if (/^\d+$/.test(locale)) {
+        throw new Error(`columns.locales のロケール名に数字のみの名前は使用できません: ${locale}`);
+      }
+      // 正規化後のヘッダー名や JavaScript の特殊プロパティと衝突する
+      if (RESERVED_LOCALE_NAMES.includes(locale)) {
+        throw new Error(`columns.locales のロケール名に予約語は使用できません: ${locale}`);
       }
     });
   }
