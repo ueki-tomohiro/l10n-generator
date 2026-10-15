@@ -33,6 +33,10 @@ export const loadConfig = (configPath: string): Config => {
     throw new Error(`skipRows は0以上の整数で指定してください: ${config.skipRows}`);
   }
 
+  if (config.arbIndent !== undefined && (!Number.isInteger(config.arbIndent) || config.arbIndent < 0)) {
+    throw new Error(`arbIndent は0以上の整数で指定してください: ${config.arbIndent}`);
+  }
+
   if (config.columns) {
     if (config.columns.key === undefined) {
       throw new Error("columns を指定する場合は columns.key が必要です");

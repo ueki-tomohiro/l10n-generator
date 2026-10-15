@@ -18,7 +18,8 @@ const createInputParameterFunction = (key: string, text: string) => {
   if (!text) return undefined;
   const matches = text.match(/\{\w+\}/g);
   if (!matches || matches.length === 0) return undefined;
-  const params = matches.map((t) => t.match(/\w+/)).flatMap((a) => a) as string[];
+  // 同じプレースホルダーが文言に複数回出ても、引数は1つにする（replaceAll で全箇所が置き換わる）
+  const params = [...new Set(matches.map((t) => t.match(/\w+/)).flatMap((a) => a) as string[])];
 
   return `export const ${camelCase(key)} = (t: Translation, params: { ${params
     .map((p) => `${p}: string;`)

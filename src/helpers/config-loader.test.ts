@@ -202,6 +202,31 @@ describe("loadConfig", () => {
     expect(() => loadConfig(configPath)).toThrow("skipRows は0以上の整数");
   });
 
+  it("arbIndentを読み込む", () => {
+    const configPath = createTestConfig(tempDir, {
+      fileType: "csv",
+      path: "/test/data.csv",
+      credentialType: "none",
+      localizePath: "./output",
+      arbIndent: 2,
+    });
+
+    expect(loadConfig(configPath).arbIndent).toBe(2);
+  });
+
+  it.each([-1, 1.5, "2"])("arbIndentが不正な値(%s)でエラー", (arbIndent) => {
+    const configPath = createTestConfig(tempDir, {
+      fileType: "csv",
+      path: "/test/data.csv",
+      credentialType: "none",
+      localizePath: "./output",
+      // YAML に文字列などの不正な値が書かれたケースを再現する
+      arbIndent: arbIndent as number,
+    });
+
+    expect(() => loadConfig(configPath)).toThrow("arbIndent は0以上の整数");
+  });
+
   it("columns.key欠損でエラー", () => {
     const configPath = createTestConfig(tempDir, {
       fileType: "csv",

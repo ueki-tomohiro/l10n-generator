@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- Add `arbIndent` config to pretty-print ARB files with the given indent width and a trailing newline. Without it, ARB files keep the previous single-line output.
+- Fix the TypeScript exporter generating duplicate parameters (TS2300) when the same placeholder appears more than once in a message.
+
 ## 0.3.0 - 2026-08-29
 - Add `fileType: xlsx` to read localization data from a local xlsx file.
 - Add `columns` / `skipRows` config to map an arbitrary column layout onto the internal `[key, description, ...locales]` shape. Configs without `columns` keep the previous fixed layout.

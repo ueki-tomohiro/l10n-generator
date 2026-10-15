@@ -20,7 +20,15 @@ const parseInputParameter = (text: string) => {
   return place;
 };
 
-export const createL10nFile = async (localizePath: string, values: string[][], locale: SupportLocale) => {
+/**
+ * @param indent JSON のインデント幅。指定すると整形して末尾に改行を付ける。未指定は1行で出力する
+ */
+export const createL10nFile = async (
+  localizePath: string,
+  values: string[][],
+  locale: SupportLocale,
+  indent?: number
+) => {
   // ヘッダー行を取得（配列の最初の要素）
   const labels = values.shift();
   if (!labels) return;
@@ -44,5 +52,6 @@ export const createL10nFile = async (localizePath: string, values: string[][], l
     });
 
   const ja = { "@@locale": locale, ...lines };
-  fs.writeFileSync(`${localizePath}app_${locale}.arb`, JSON.stringify(ja));
+  const content = indent === undefined ? JSON.stringify(ja) : `${JSON.stringify(ja, null, indent)}\n`;
+  fs.writeFileSync(`${localizePath}app_${locale}.arb`, content);
 };

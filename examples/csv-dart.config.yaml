@@ -6,3 +6,6 @@ path: ./localization.csv
 credentialType: none
 localizePath: ./lib/l10n/
 outputType: dart
+
+# ARB を2スペースで整形して出力する（省略すると1行で出力）
+arbIndent: 2
