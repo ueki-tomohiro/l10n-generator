@@ -3,6 +3,7 @@
 ## 0.4.0 - 2026-10-15
 - Add `arbIndent` config (an integer from 0 to 10) to pretty-print ARB files with the given indent width and a trailing newline. Without it, ARB files keep the previous single-line output.
 - Fix the TypeScript exporter generating duplicate parameters (TS2300) when the same placeholder appears more than once in a message.
+- Declare `bin` as an object so that newer npm versions no longer strip the `l10n-generator` command on publish.
 
 ## 0.3.0 - 2026-08-29
 - Add `fileType: xlsx` to read localization data from a local xlsx file.
