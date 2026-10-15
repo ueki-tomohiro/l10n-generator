@@ -21,7 +21,7 @@ const extractLocales = (values: string[][]): string[] => {
 /**
  * Dart ARB形式でエクスポート
  */
-const exportDart = async (localizePath: string, values: string[][]): Promise<void> => {
+const exportDart = async (localizePath: string, values: string[][], arbIndent?: number): Promise<void> => {
   const locales = extractLocales(values);
 
   console.log(`Dart ARB形式でエクスポート中: ${locales.join(", ")}`);
@@ -29,7 +29,7 @@ const exportDart = async (localizePath: string, values: string[][]): Promise<voi
   // createL10nFileは破壊的操作（pop）を行うため、各ロケールごとにコピーを渡す
   for (const locale of locales) {
     const valuesCopy = JSON.parse(JSON.stringify(values));
-    await createL10nFile(localizePath, valuesCopy, locale as SupportLocale);
+    await createL10nFile(localizePath, valuesCopy, locale as SupportLocale, arbIndent);
     console.log(`  - app_${locale}.arb を生成しました`);
   }
 };
@@ -88,7 +88,7 @@ export const cli = async (configPath: string = "l10n-generator.config.yaml"): Pr
 
     switch (outputType) {
       case "dart":
-        await exportDart(config.localizePath, values);
+        await exportDart(config.localizePath, values, config.arbIndent);
         break;
 
       case "typescript":
@@ -96,7 +96,7 @@ export const cli = async (configPath: string = "l10n-generator.config.yaml"): Pr
         break;
 
       case "both":
-        await exportDart(config.localizePath, values);
+        await exportDart(config.localizePath, values, config.arbIndent);
         console.log(); // 空行
         await exportTypeScript(config.localizePath, values);
         break;

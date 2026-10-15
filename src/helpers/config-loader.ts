@@ -33,6 +33,14 @@ export const loadConfig = (configPath: string): Config => {
     throw new Error(`skipRows は0以上の整数で指定してください: ${config.skipRows}`);
   }
 
+  // JSON.stringify は数値のインデント幅を10で打ち切るため、指定どおりに出力できる範囲に限る
+  if (
+    config.arbIndent !== undefined &&
+    (!Number.isInteger(config.arbIndent) || config.arbIndent < 0 || config.arbIndent > 10)
+  ) {
+    throw new Error(`arbIndent は0以上10以下の整数で指定してください: ${config.arbIndent}`);
+  }
+
   if (config.columns) {
     if (config.columns.key === undefined) {
       throw new Error("columns を指定する場合は columns.key が必要です");

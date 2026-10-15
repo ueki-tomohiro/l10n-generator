@@ -37,4 +37,6 @@ export type Config = {
   /** 先頭から読み飛ばす行数 (既定 0)。columns 指定時のみ有効 */
   skipRows?: number;
   columns?: ColumnMapping;
+  /** ARB の JSON インデント幅（0〜10）。指定すると整形して末尾に改行を付ける。未指定は従来どおり1行で出力 */
+  arbIndent?: number;
 };

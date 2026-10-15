@@ -90,6 +90,24 @@ describe("createL10nFile", () => {
     });
   });
 
+  it("indent未指定のときは1行で出力する", async () => {
+    const values = JSON.parse(JSON.stringify(basicTestData));
+    await createL10nFile(`${tempDir}/`, values, "ja");
+
+    const content = fs.readFileSync(path.join(tempDir, "app_ja.arb"), "utf-8");
+    expect(content).not.toContain("\n");
+  });
+
+  it("indentを指定すると整形して末尾に改行を付ける", async () => {
+    const values = JSON.parse(JSON.stringify(basicTestData));
+    await createL10nFile(`${tempDir}/`, values, "ja", 2);
+
+    const content = fs.readFileSync(path.join(tempDir, "app_ja.arb"), "utf-8");
+    expect(content.startsWith('{\n  "@@locale": "ja",\n  "hello": "こんにちは",\n')).toBe(true);
+    expect(content.endsWith("}\n")).toBe(true);
+    expect(content.endsWith("}\n\n")).toBe(false);
+  });
+
   it("配列の破壊的操作（shift）を実行する", async () => {
     const values = JSON.parse(JSON.stringify(basicTestData));
     const originalLength = values.length;
@@ -189,6 +207,19 @@ describe("createTypeScriptL10nFiles", () => {
     expect(content).toContain("export const errorCount");
     expect(content).toContain("params: { count: string; }");
     expect(content).toContain('.replaceAll("{count}", params.count)');
+  });
+
+  it("同じプレースホルダーが複数回出る文言では引数を1つにする", async () => {
+    const values = [
+      ["key", "description", "ja", "en"],
+      ["greetTwice", "Greeting", "{name}さん、こんにちは。{name}さん", "Hi {name}, {name}"],
+    ];
+
+    await createTypeScriptL10nFiles(`${tempDir}/`, values);
+
+    const content = fs.readFileSync(path.join(tempDir, "translateFunction.ts"), "utf-8");
+    expect(content).toContain("params: { name: string; }");
+    expect(content.match(/\.replaceAll\("\{name\}", params\.name\)/g)).toHaveLength(1);
   });
 
   it("dot keyをquoted propertyとbracket accessで生成する", async () => {
