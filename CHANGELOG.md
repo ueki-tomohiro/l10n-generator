@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- Add `arbIndent` config to pretty-print ARB files with the given indent width and a trailing newline. Without it, ARB files keep the previous single-line output.
+- Add `arbIndent` config (an integer from 0 to 10) to pretty-print ARB files with the given indent width and a trailing newline. Without it, ARB files keep the previous single-line output.
 - Fix the TypeScript exporter generating duplicate parameters (TS2300) when the same placeholder appears more than once in a message.
 
 ## 0.3.0 - 2026-08-29

@@ -99,7 +99,7 @@ output/
 └── app_en.arb
 ```
 
-既定では改行なしの1行で出力します。`arbIndent: 2` のように指定すると、そのインデント幅で整形し、末尾に改行を付けます。
+既定では改行なしの1行で出力します。`arbIndent: 2` のように指定すると、そのインデント幅で整形し、末尾に改行を付けます。指定できるのは0〜10の整数です（`JSON.stringify` のインデント幅の上限が10のため）。
 
 `app_ja.arb`の内容例（`arbIndent: 2` の場合）:
 
@@ -178,7 +178,7 @@ export const translation: Translation = {
 | `sheetName`      | `string`                                  | -    | シート名（既定: 先頭シート）          |
 | `skipRows`       | `number`                                  | -    | 読み飛ばす先頭行数（既定: `0`）       |
 | `columns`        | `ColumnMapping`                           | -    | 列レイアウトの明示指定                |
-| `arbIndent`      | `number`                                  | -    | ARB のインデント幅（既定: 1行で出力） |
+| `arbIndent`      | `number`                                  | -    | ARB のインデント幅 0〜10（既定: 1行） |
 
 ### 列レイアウトのカスタマイズ
 

@@ -202,19 +202,19 @@ describe("loadConfig", () => {
     expect(() => loadConfig(configPath)).toThrow("skipRows は0以上の整数");
   });
 
-  it("arbIndentを読み込む", () => {
+  it.each([0, 2, 10])("arbIndent(%s)を読み込む", (arbIndent) => {
     const configPath = createTestConfig(tempDir, {
       fileType: "csv",
       path: "/test/data.csv",
       credentialType: "none",
       localizePath: "./output",
-      arbIndent: 2,
+      arbIndent,
     });
 
-    expect(loadConfig(configPath).arbIndent).toBe(2);
+    expect(loadConfig(configPath).arbIndent).toBe(arbIndent);
   });
 
-  it.each([-1, 1.5, "2"])("arbIndentが不正な値(%s)でエラー", (arbIndent) => {
+  it.each([-1, 1.5, "2", 11])("arbIndentが不正な値(%s)でエラー", (arbIndent) => {
     const configPath = createTestConfig(tempDir, {
       fileType: "csv",
       path: "/test/data.csv",
@@ -224,7 +224,7 @@ describe("loadConfig", () => {
       arbIndent: arbIndent as number,
     });
 
-    expect(() => loadConfig(configPath)).toThrow("arbIndent は0以上の整数");
+    expect(() => loadConfig(configPath)).toThrow("arbIndent は0以上10以下の整数");
   });
 
   it("columns.key欠損でエラー", () => {
